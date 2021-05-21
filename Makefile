@@ -10,7 +10,7 @@ test:
 	$(DUNE) runtest $(DUNE_ARGS)
 
 format:
-	$(DUNE) build @fmt --auto-promote
+	$(DUNE) build @fmt @lint --auto-promote
 
 .PHONY: clean build test format
 .DEFAULT: build
