@@ -1,4 +1,4 @@
-type a = int option [@@deriving make]
+open Option_types
 
 let none _ = OUnit2.assert_equal None @@ make_a ()
 
