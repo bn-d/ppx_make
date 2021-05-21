@@ -1,4 +1,4 @@
-type b = { b1 : int } [@@deriving make]
+(*type b = { b1 : int } [@@deriving make]
 
 type o = { o1 : int option } [@@deriving make]
 
@@ -82,4 +82,4 @@ let suite =
          "main" >:: main;
          "complex_1" >:: complex_1;
          "complex_2" >:: complex_2;
-       ]
+       ]*)
