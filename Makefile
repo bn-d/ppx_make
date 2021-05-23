@@ -1,16 +1,17 @@
 DUNE=dune
+DARGS=$(if $(VERBOSE),--verbose,) $(DUNE_ARGS)
 
 clean:
-	$(DUNE) clean $(DUNE_ARGS)
+	$(DUNE) clean $(DARGS)
 
 build:
-	$(DUNE) build $(DUNE_ARGS)
+	$(DUNE) build $(DARGS)
 
 test:
-	$(DUNE) runtest $(DUNE_ARGS)
+	$(DUNE) runtest $(DARGS)
 
 format:
-	$(DUNE) build @fmt @lint --auto-promote
+	$(DUNE) build @fmt @lint --auto-promote $(DARGS)
 
 .PHONY: clean build test format
 .DEFAULT: build

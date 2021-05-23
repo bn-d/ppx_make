@@ -27,7 +27,7 @@ type complex = {
   c3 : int list;
   c4 : string;
   c5 : int; [@default 1024]
-  c6 : int; [@required]
+  c6 : string; [@required]
 }
 [@@deriving make]
 
