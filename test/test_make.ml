@@ -4,6 +4,6 @@ let _ =
     ("test_make"
     >::: [
            Test_make_option.suite;
-           (*Test_make_record.suite;
-             Test_make_variant.suite;*)
+           Test_make_record.suite;
+           (*Test_make_variant.suite;*)
          ])

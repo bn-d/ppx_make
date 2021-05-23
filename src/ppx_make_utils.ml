@@ -11,6 +11,8 @@ let make_type_decl_generator f =
 
 let gen_make_name P.{ txt = name; loc } = P.{ txt = "make_" ^ name; loc }
 
+let longident_loc_of_name P.{ txt; loc } = P.{ txt = P.Lident txt; loc }
+
 (* Core Type Utils *)
 
 let unit_core_type ~loc =
@@ -18,6 +20,21 @@ let unit_core_type ~loc =
 
 let core_type_of_name P.{ txt = name; loc } =
   Ast_helper.Typ.constr ~loc P.{ txt = P.Lident name; loc } []
+
+let is_core_type_option (ct : P.core_type) =
+  match ct.ptyp_desc with
+  | Ptyp_constr ({ txt = Lident "option"; _ }, _) -> true
+  | _ -> false
+
+let is_core_type_list (ct : P.core_type) =
+  match ct.ptyp_desc with
+  | Ptyp_constr ({ txt = Lident "list"; _ }, _) -> true
+  | _ -> false
+
+let is_core_type_string (ct : P.core_type) =
+  match ct.ptyp_desc with
+  | Ptyp_constr ({ txt = Lident "string"; _ }, []) -> true
+  | _ -> false
 
 let is_core_type_optional (ct : P.core_type) =
   match ct.ptyp_desc with
