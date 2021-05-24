@@ -60,7 +60,7 @@ let get_attributes (attrs : P.attribute list) =
     | _, No_attr -> acc
     | _, _ ->
         P.Location.raise_errorf ~loc
-          "field cannot have more than one attributes"
+          "single field cannot have more than one attributes"
   in
   List.fold_left
     (fun acc (attr : P.attribute) ->

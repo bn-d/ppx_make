@@ -11,35 +11,34 @@ let fun_expression_of_record ~loc (lds : P.label_declaration list) :
         |> List.map Utils.get_attributes
       in
       let label_pats, main_pats =
-        lds
-        |> List.fold_left
-             (fun (label_pats, main_pats)
-                  P.{ pld_name; pld_type; pld_attributes; _ } ->
-               let pat = Ast_helper.Pat.var pld_name in
-               let attr_type : Utils.attr_type =
-                 Utils.get_attributes pld_attributes
-               in
-               let optional = Utils.is_core_type_optional pld_type in
-               match (attr_type, optional) with
-               | Main, _ -> (label_pats, pat :: main_pats)
-               | Default def, _ ->
-                   ( (P.Optional pld_name.txt, Some def, pat) :: label_pats,
-                     main_pats )
-               | No_attr, true ->
-                   let def =
-                     let open P in
-                     if Utils.is_core_type_list pld_type then Some [%expr []]
-                     else if Utils.is_core_type_string pld_type then
-                       Some [%expr ""]
-                     else None
-                   in
-                   ((P.Optional pld_name.txt, def, pat) :: label_pats, main_pats)
-               | _, _ ->
-                   ((P.Labelled pld_name.txt, None, pat) :: label_pats, main_pats))
-             ([], [])
+        List.fold_left
+          (fun (label_pats, main_pats)
+               P.{ pld_name; pld_type; pld_attributes; _ } ->
+            let pat = Ast_helper.Pat.var pld_name in
+            let attr_type : Utils.attr_type =
+              Utils.get_attributes pld_attributes
+            in
+            let optional = Utils.is_core_type_optional pld_type in
+            match (attr_type, optional) with
+            | Main, _ -> (label_pats, pat :: main_pats)
+            | Default def, _ ->
+                ( (P.Optional pld_name.txt, Some def, pat) :: label_pats,
+                  main_pats )
+            | No_attr, true ->
+                let def =
+                  let open P in
+                  if Utils.is_core_type_list pld_type then Some [%expr []]
+                  else if Utils.is_core_type_string pld_type then
+                    Some [%expr ""]
+                  else None
+                in
+                ((P.Optional pld_name.txt, def, pat) :: label_pats, main_pats)
+            | _, _ ->
+                ((P.Labelled pld_name.txt, None, pat) :: label_pats, main_pats))
+          ([], []) lds
       in
       let main_pats =
-        match main_pats with [] -> [ Ast_helper.Pat.any () ] | _ -> main_pats
+        if main_pats = [] then [ Ast_helper.Pat.any () ] else main_pats
       in
       lds
       |> List.map2
@@ -65,34 +64,40 @@ let fun_expression_of_record ~loc (lds : P.label_declaration list) :
           Ast_helper.Exp.fun_ arg_label default_expr cur_pat acc)
         expr label_pats)
 
+let fun_core_type_of_option ~loc name (in_ct : P.core_type) =
+  Ast_helper.with_default_loc loc (fun () ->
+      let return_ct = Utils.core_type_of_name name in
+      let open P in
+      [%type: ?value:[%t in_ct] -> unit -> [%t return_ct]])
+
 let fun_core_type_of_record ~loc name (lds : P.label_declaration list) :
     P.core_type =
   lds
   |> List.fold_left
-       (fun (label_list, main_list) P.{ pld_name; pld_type; pld_attributes; _ } ->
+       (fun (label_cts, main_cts) P.{ pld_name; pld_type; pld_attributes; _ } ->
          let attr_type : Utils.attr_type =
            Utils.get_attributes pld_attributes
          in
          let optional = Utils.is_core_type_optional pld_type in
          match (attr_type, optional) with
-         | Main, _ -> (label_list, pld_type :: main_list)
+         | Main, _ -> (label_cts, pld_type :: main_cts)
          | Default _, _ | No_attr, true ->
              let ct = Utils.strip_option pld_type in
-             ((P.Optional pld_name.txt, ct) :: label_list, main_list)
-         | _, _ -> ((P.Labelled pld_name.txt, pld_type) :: label_list, main_list))
+             ((P.Optional pld_name.txt, ct) :: label_cts, main_cts)
+         | _, _ -> ((P.Labelled pld_name.txt, pld_type) :: label_cts, main_cts))
        ([], [])
-  |> fun (label_list, main_list) ->
-  let main_list =
-    match main_list with [] -> [ Utils.unit_core_type ~loc ] | _ -> main_list
+  |> fun (label_cts, main_cts) ->
+  let main_cts =
+    if main_cts = [] then [ Utils.unit_core_type ~loc ] else main_cts
   in
   name |> Utils.core_type_of_name |> fun ct ->
   List.fold_left
     (fun acc cur -> Ast_helper.Typ.arrow P.Nolabel cur acc)
-    ct main_list
+    ct main_cts
   |> fun ct ->
   List.fold_left
     (fun acc (arg_label, cur) -> Ast_helper.Typ.arrow arg_label cur acc)
-    ct label_list
+    ct label_cts
 
 let str_item_of_core_type name (ct : P.core_type) : P.structure_item =
   let loc = ct.ptyp_loc in
@@ -101,12 +106,21 @@ let str_item_of_core_type name (ct : P.core_type) : P.structure_item =
       | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ]) ->
           (* T option *)
           let pat = Ast_helper.Pat.var @@ Utils.gen_make_name name in
-          let return_ct = Utils.core_type_of_name name in
-          (* TODO add default *)
+          let fun_ct = fun_core_type_of_option ~loc name in_ct in
+          let attr : Utils.attr_type =
+            Utils.get_attributes ct.ptyp_attributes
+          in
+          let expr =
+            let open P in
+            match attr with
+            | Default e -> [%expr fun ?(value = [%e e]) () -> Some value]
+            | No_attr -> [%expr fun ?value () -> value]
+            | _ ->
+                P.Location.raise_errorf ~loc
+                  "option type only support `defalt` attribute"
+          in
           let open P in
-          [%stri
-            let ([%p pat] : ?value:[%t in_ct] -> unit -> [%t return_ct]) =
-             fun ?value () -> value]
+          [%stri let ([%p pat] : [%t fun_ct]) = [%e expr]]
       | _ -> Utils.unsupported_error name)
 
 let str_item_of_record ~loc name (lds : P.label_declaration list) :
@@ -125,9 +139,8 @@ let sig_item_of_core_type name (ct : P.core_type) : P.signature_item =
       | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ]) ->
           (* T option *)
           let fun_name = Utils.gen_make_name name in
-          let return_ct = Utils.core_type_of_name name in
-          let open P in
-          [%type: ?value:[%t in_ct] -> unit -> [%t return_ct]]
+          in_ct
+          |> fun_core_type_of_option ~loc name
           |> Ast_helper.Val.mk fun_name |> Ast_helper.Sig.value
       | _ -> Utils.unsupported_error name)
 
