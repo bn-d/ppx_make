@@ -1,4 +1,4 @@
-name: OCaml
+name: CI Workflow
 
 on:
   push:
