@@ -8,12 +8,29 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        ocaml-compiler:
+          - 4.12.x
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
 
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - name: Install dependencies
+        run: opam install . --deps-only --with-test
+
       - name: Build
-        run: dune build --verbose
-      - name: Run tests
-        run: dune runtest --verbose
+        run: opam exec -- dune build --verbose
+
+      - name: Test
+        run: opam exec -- dune runtest --verbose
