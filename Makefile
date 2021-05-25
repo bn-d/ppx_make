@@ -11,7 +11,7 @@ test:
 	$(DUNE) runtest $(DARGS)
 
 format:
-	$(DUNE) build @fmt @lint --auto-promote $(DARGS)
+	$(DUNE) build @fmt --auto-promote $(DARGS)
 
 .PHONY: clean build test format
 .DEFAULT: build

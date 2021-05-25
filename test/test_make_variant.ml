@@ -26,13 +26,13 @@ let record_complex_1 _ =
     (make_r_complex_of_record_v ~c1:32 ~c2:64 ~c3:[ 128; 256; 512 ] ~c4:"boom"
        ~c5:0 ~c6:"Z06" ())
 
-let reocrd_complex_2 _ =
+let record_complex_2 _ =
   OUnit2.assert_equal
-    { cm1 = 8; cm2 = None; cm3 = None }
-    (make_complex_with_main 8 None);
+    (R_complex_with_main { cm1 = 8; cm2 = None; cm3 = None })
+    (make_r_complex_with_main_of_record_v 8 None);
   OUnit2.assert_equal
-    { cm1 = 8; cm2 = Some 27; cm3 = Some 64 }
-    (make_complex_with_main ~cm2:27 8 (Some 64))
+    (R_complex_with_main { cm1 = 8; cm2 = Some 27; cm3 = Some 64 })
+    (make_r_complex_with_main_of_record_v ~cm2:27 8 (Some 64))
 
 let suite =
   let open OUnit2 in

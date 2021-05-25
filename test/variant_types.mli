@@ -20,16 +20,24 @@ type record_v =
     }
 [@@deriving_inline make]
 
-include
-  sig
-    [@@@ocaml.warning "-32"]
-    val make_R_basic_of_record_v : b1:int -> unit -> record_v
-    val make_R_complex_of_record_v :
-      c1:int ->
-        ?c2:int ->
-          ?c3:int list ->
-            ?c4:string -> ?c5:int -> c6:string -> unit -> record_v
-    val make_R_complex_with_main_of_record_v :
-      ?cm2:int -> int -> int option -> record_v
-  end[@@ocaml.doc "@inline"]
+include sig
+  [@@@ocaml.warning "-32"]
+
+  val make_r_basic_of_record_v : b1:int -> unit -> record_v
+
+  val make_r_complex_of_record_v :
+    c1:int ->
+    ?c2:int ->
+    ?c3:int list ->
+    ?c4:string ->
+    ?c5:int ->
+    c6:string ->
+    unit ->
+    record_v
+
+  val make_r_complex_with_main_of_record_v :
+    ?cm2:int -> int -> int option -> record_v
+end
+[@@ocaml.doc "@inline"]
+
 [@@@end]
