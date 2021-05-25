@@ -7,9 +7,12 @@ let unsupported_error P.{ txt; loc } =
 let make_type_decl_generator f =
   P.Deriving.Generator.V2.make_noarg @@ fun ~ctxt (rec_flag, tds) ->
   let loc = P.Expansion_context.Deriver.derived_item_loc ctxt in
-  tds |> List.map @@ f ~loc rec_flag
+  tds |> List.map @@ f ~loc rec_flag |> List.concat
 
 let gen_make_name P.{ txt = name; loc } = P.{ txt = "make_" ^ name; loc }
+
+let gen_make_choice_name P.{ txt = name; _ } P.{ txt = choice_name; loc } =
+  P.{ txt = "make_" ^ choice_name ^ "_of_" ^ name; loc }
 
 let longident_loc_of_name P.{ txt; loc } = P.{ txt = P.Lident txt; loc }
 
