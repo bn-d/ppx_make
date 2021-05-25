@@ -2,7 +2,7 @@ module P = Ppxlib
 module Ast_helper = Ppxlib.Ast_helper
 module Utils = Ppx_make_utils
 
-let fun_expression_of_record ~loc (lds : P.label_declaration list) :
+let fun_expression_of_record ~loc ?choice (lds : P.label_declaration list) :
     P.expression =
   Ast_helper.with_default_loc loc (fun () ->
       let attrs : Utils.attr_type list =
@@ -55,14 +55,18 @@ let fun_expression_of_record ~loc (lds : P.label_declaration list) :
            attrs
       |> fun labels ->
       Ast_helper.Exp.record labels None |> fun expr ->
-      List.fold_left
-        (fun acc cur_pat -> Ast_helper.Exp.fun_ P.Nolabel None cur_pat acc)
-        expr main_pats
-      |> fun expr ->
-      List.fold_left
-        (fun acc (arg_label, default_expr, cur_pat) ->
-          Ast_helper.Exp.fun_ arg_label default_expr cur_pat acc)
-        expr label_pats)
+      match choice with
+      | Some choice -> Ast_helper.Exp.variant choice @@ Some expr
+      | None ->
+          expr |> fun expr ->
+          List.fold_left
+            (fun acc cur_pat -> Ast_helper.Exp.fun_ P.Nolabel None cur_pat acc)
+            expr main_pats
+          |> fun expr ->
+          List.fold_left
+            (fun acc (arg_label, default_expr, cur_pat) ->
+              Ast_helper.Exp.fun_ arg_label default_expr cur_pat acc)
+            expr label_pats)
 
 let fun_core_type_of_option ~loc name (in_ct : P.core_type) =
   Ast_helper.with_default_loc loc (fun () ->
@@ -132,6 +136,26 @@ let str_item_of_record ~loc name (lds : P.label_declaration list) :
       let open P in
       [%stri let ([%p pat] : [%t ct]) = [%e expr]])
 
+let str_item_of_variant_choice name (cd : P.constructor_declaration) :
+    P.structure_item =
+  let loc = cd.pcd_loc in
+  Ast_helper.with_default_loc loc (fun () ->
+      if Option.is_some cd.pcd_res then Utils.unsupported_error name
+      else
+        let pat =
+          Ast_helper.Pat.var @@ Utils.gen_make_choice_name name cd.pcd_name
+        in
+        let ct, expr =
+          match cd.pcd_args with
+          | Pcstr_tuple _ -> failwith ""
+          (* TODO the expr part is not correct fun -> C {} instead of fun -> {} *)
+          | Pcstr_record lds ->
+              ( fun_core_type_of_record ~loc name lds,
+                fun_expression_of_record ~loc lds )
+        in
+        let open P in
+        [%stri let ([%p pat] : [%t ct]) = [%e expr]])
+
 let sig_item_of_core_type name (ct : P.core_type) : P.signature_item =
   let loc = ct.ptyp_loc in
   Ast_helper.with_default_loc loc (fun () ->
@@ -152,34 +176,52 @@ let sig_item_of_record ~loc name (lds : P.label_declaration list) :
       |> fun_core_type_of_record ~loc name
       |> Ast_helper.Val.mk fun_name |> Ast_helper.Sig.value)
 
-let structure_item_of_type_decl ~loc:_ (_rec_flag : P.rec_flag)
-    (td : P.type_declaration) : P.structure_item =
+let sig_item_of_variant_choice name (cd : P.constructor_declaration) :
+    P.signature_item =
+  let loc = cd.pcd_loc in
+  Ast_helper.with_default_loc loc (fun () ->
+      if Option.is_some cd.pcd_res then Utils.unsupported_error name
+      else
+        let fun_name = Utils.gen_make_choice_name name cd.pcd_name in
+        (match cd.pcd_args with
+        | Pcstr_tuple _ -> failwith ""
+        | Pcstr_record lds -> fun_core_type_of_record ~loc name lds)
+        |> Ast_helper.Val.mk fun_name |> Ast_helper.Sig.value)
+
+let structure_of_type_decl ~loc:_ (_rec_flag : P.rec_flag)
+    (td : P.type_declaration) : P.structure =
   let name = td.ptype_name in
+  let loc = td.ptype_loc in
   match td with
   | { ptype_kind = Ptype_abstract; ptype_manifest = Some ct; _ } ->
       (* type t = T0 *)
-      str_item_of_core_type name ct
-  | { ptype_kind = Ptype_variant _; _ } -> failwith "variant not impl"
+      [ str_item_of_core_type name ct ]
+  | { ptype_kind = Ptype_variant cds; _ } ->
+      (* type t = C of T | ... *)
+      List.map (str_item_of_variant_choice name) cds
   | { ptype_kind = Ptype_record lds; _ } ->
       (* type t = {l: T; ...} *)
-      str_item_of_record ~loc:td.ptype_loc name lds
+      [ str_item_of_record ~loc name lds ]
   | _ -> Utils.unsupported_error name
 
-let signature_item_of_type_decl ~loc:_ (_rec_flag : P.rec_flag)
-    (td : P.type_declaration) : P.signature_item =
+let signature_of_type_decl ~loc:_ (_rec_flag : P.rec_flag)
+    (td : P.type_declaration) : P.signature =
   let name = td.ptype_name in
+  let loc = td.ptype_loc in
   match td with
   | { ptype_kind = Ptype_abstract; ptype_manifest = Some ct; _ } ->
       (* type t = T0 *)
-      sig_item_of_core_type name ct
-  | { ptype_kind = Ptype_variant _; _ } -> failwith "variant not impl"
+      [ sig_item_of_core_type name ct ]
+  | { ptype_kind = Ptype_variant cds; _ } ->
+      (* type t = C of T | ... *)
+      List.map (sig_item_of_variant_choice name) cds
   | { ptype_kind = Ptype_record lds; _ } ->
       (* type t = {l: T; ...} *)
-      sig_item_of_record ~loc:td.ptype_loc name lds
+      [ sig_item_of_record ~loc name lds ]
   | _ -> Utils.unsupported_error name
 
-let str_type_decl = Utils.make_type_decl_generator structure_item_of_type_decl
+let str_type_decl = Utils.make_type_decl_generator structure_of_type_decl
 
-let sig_type_decl = Utils.make_type_decl_generator signature_item_of_type_decl
+let sig_type_decl = Utils.make_type_decl_generator signature_of_type_decl
 
 let deriver = P.Deriving.add "make" ~str_type_decl ~sig_type_decl
