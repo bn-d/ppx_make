@@ -27,10 +27,12 @@ let fun_expression_of_record ~loc ?choice (lds : P.label_declaration list) :
             | No_attr, true ->
                 let def =
                   let open P in
-                  if Utils.is_core_type_list pld_type then Some [%expr []]
+                  if Utils.is_core_type_list pld_type then
+                    Some [%expr []]
                   else if Utils.is_core_type_string pld_type then
                     Some [%expr ""]
-                  else None
+                  else
+                    None
                 in
                 ((P.Optional pld_name.txt, def, pat) :: label_pats, main_pats)
             | _, _ ->
@@ -53,20 +55,22 @@ let fun_expression_of_record ~loc ?choice (lds : P.label_declaration list) :
                      (lid, [%expr Some [%e expr]])
                  | _, _ -> (lid, expr)))
            attrs
-      |> fun labels ->
-      Ast_helper.Exp.record labels None |> fun expr ->
-      match choice with
-      | Some choice -> Ast_helper.Exp.variant choice @@ Some expr
-      | None ->
-          expr |> fun expr ->
-          List.fold_left
-            (fun acc cur_pat -> Ast_helper.Exp.fun_ P.Nolabel None cur_pat acc)
-            expr main_pats
-          |> fun expr ->
-          List.fold_left
-            (fun acc (arg_label, default_expr, cur_pat) ->
-              Ast_helper.Exp.fun_ arg_label default_expr cur_pat acc)
-            expr label_pats)
+      |> (fun labels -> Ast_helper.Exp.record labels None)
+      |> (fun expr ->
+           match choice with
+           | Some choice_name ->
+               let lid = Utils.longident_loc_of_name choice_name in
+               Ast_helper.Exp.construct lid (Some expr)
+           | None -> expr)
+      |> fun expr ->
+      List.fold_left
+        (fun acc cur_pat -> Ast_helper.Exp.fun_ P.Nolabel None cur_pat acc)
+        expr main_pats
+      |> fun expr ->
+      List.fold_left
+        (fun acc (arg_label, default_expr, cur_pat) ->
+          Ast_helper.Exp.fun_ arg_label default_expr cur_pat acc)
+        expr label_pats)
 
 let fun_core_type_of_option ~loc name (in_ct : P.core_type) =
   Ast_helper.with_default_loc loc (fun () ->
@@ -76,32 +80,38 @@ let fun_core_type_of_option ~loc name (in_ct : P.core_type) =
 
 let fun_core_type_of_record ~loc name (lds : P.label_declaration list) :
     P.core_type =
-  lds
-  |> List.fold_left
-       (fun (label_cts, main_cts) P.{ pld_name; pld_type; pld_attributes; _ } ->
-         let attr_type : Utils.attr_type =
-           Utils.get_attributes pld_attributes
-         in
-         let optional = Utils.is_core_type_optional pld_type in
-         match (attr_type, optional) with
-         | Main, _ -> (label_cts, pld_type :: main_cts)
-         | Default _, _ | No_attr, true ->
-             let ct = Utils.strip_option pld_type in
-             ((P.Optional pld_name.txt, ct) :: label_cts, main_cts)
-         | _, _ -> ((P.Labelled pld_name.txt, pld_type) :: label_cts, main_cts))
-       ([], [])
-  |> fun (label_cts, main_cts) ->
-  let main_cts =
-    if main_cts = [] then [ Utils.unit_core_type ~loc ] else main_cts
-  in
-  name |> Utils.core_type_of_name |> fun ct ->
-  List.fold_left
-    (fun acc cur -> Ast_helper.Typ.arrow P.Nolabel cur acc)
-    ct main_cts
-  |> fun ct ->
-  List.fold_left
-    (fun acc (arg_label, cur) -> Ast_helper.Typ.arrow arg_label cur acc)
-    ct label_cts
+  Ast_helper.with_default_loc loc (fun () ->
+      let label_cts, main_cts =
+        lds
+        |> List.fold_left
+             (fun (label_cts, main_cts)
+                  P.{ pld_name; pld_type; pld_attributes; _ } ->
+               let attr_type : Utils.attr_type =
+                 Utils.get_attributes pld_attributes
+               in
+               let optional = Utils.is_core_type_optional pld_type in
+               match (attr_type, optional) with
+               | Main, _ -> (label_cts, pld_type :: main_cts)
+               | Default _, _ | No_attr, true ->
+                   let ct = Utils.strip_option pld_type in
+                   ((P.Optional pld_name.txt, ct) :: label_cts, main_cts)
+               | _, _ ->
+                   ((P.Labelled pld_name.txt, pld_type) :: label_cts, main_cts))
+             ([], [])
+      in
+      let main_cts =
+        if main_cts = [] then [ Utils.unit_core_type ~loc ] else main_cts
+      in
+      name
+      |> Utils.core_type_of_name
+      |> fun ct ->
+      List.fold_left
+        (fun acc cur -> Ast_helper.Typ.arrow P.Nolabel cur acc)
+        ct main_cts
+      |> fun ct ->
+      List.fold_left
+        (fun acc (arg_label, cur) -> Ast_helper.Typ.arrow arg_label cur acc)
+        ct label_cts)
 
 let str_item_of_core_type name (ct : P.core_type) : P.structure_item =
   let loc = ct.ptyp_loc in
@@ -140,7 +150,8 @@ let str_item_of_variant_choice name (cd : P.constructor_declaration) :
     P.structure_item =
   let loc = cd.pcd_loc in
   Ast_helper.with_default_loc loc (fun () ->
-      if Option.is_some cd.pcd_res then Utils.unsupported_error name
+      if Option.is_some cd.pcd_res then
+        Utils.unsupported_error name
       else
         let pat =
           Ast_helper.Pat.var @@ Utils.gen_make_choice_name name cd.pcd_name
@@ -148,10 +159,9 @@ let str_item_of_variant_choice name (cd : P.constructor_declaration) :
         let ct, expr =
           match cd.pcd_args with
           | Pcstr_tuple _ -> failwith ""
-          (* TODO the expr part is not correct fun -> C {} instead of fun -> {} *)
           | Pcstr_record lds ->
               ( fun_core_type_of_record ~loc name lds,
-                fun_expression_of_record ~loc lds )
+                fun_expression_of_record ~loc ~choice:cd.pcd_name lds )
         in
         let open P in
         [%stri let ([%p pat] : [%t ct]) = [%e expr]])
@@ -165,7 +175,8 @@ let sig_item_of_core_type name (ct : P.core_type) : P.signature_item =
           let fun_name = Utils.gen_make_name name in
           in_ct
           |> fun_core_type_of_option ~loc name
-          |> Ast_helper.Val.mk fun_name |> Ast_helper.Sig.value
+          |> Ast_helper.Val.mk fun_name
+          |> Ast_helper.Sig.value
       | _ -> Utils.unsupported_error name)
 
 let sig_item_of_record ~loc name (lds : P.label_declaration list) :
@@ -174,21 +185,26 @@ let sig_item_of_record ~loc name (lds : P.label_declaration list) :
       let fun_name = Utils.gen_make_name name in
       lds
       |> fun_core_type_of_record ~loc name
-      |> Ast_helper.Val.mk fun_name |> Ast_helper.Sig.value)
+      |> Ast_helper.Val.mk fun_name
+      |> Ast_helper.Sig.value)
 
 let sig_item_of_variant_choice name (cd : P.constructor_declaration) :
     P.signature_item =
   let loc = cd.pcd_loc in
   Ast_helper.with_default_loc loc (fun () ->
-      if Option.is_some cd.pcd_res then Utils.unsupported_error name
+      if Option.is_some cd.pcd_res then
+        Utils.unsupported_error name
       else
         let fun_name = Utils.gen_make_choice_name name cd.pcd_name in
         (match cd.pcd_args with
         | Pcstr_tuple _ -> failwith ""
         | Pcstr_record lds -> fun_core_type_of_record ~loc name lds)
-        |> Ast_helper.Val.mk fun_name |> Ast_helper.Sig.value)
+        |> Ast_helper.Val.mk fun_name
+        |> Ast_helper.Sig.value)
 
-let structure_of_type_decl ~loc:_ (_rec_flag : P.rec_flag)
+let structure_of_type_decl
+    ~loc:_
+    (_rec_flag : P.rec_flag)
     (td : P.type_declaration) : P.structure =
   let name = td.ptype_name in
   let loc = td.ptype_loc in
@@ -204,7 +220,9 @@ let structure_of_type_decl ~loc:_ (_rec_flag : P.rec_flag)
       [ str_item_of_record ~loc name lds ]
   | _ -> Utils.unsupported_error name
 
-let signature_of_type_decl ~loc:_ (_rec_flag : P.rec_flag)
+let signature_of_type_decl
+    ~loc:_
+    (_rec_flag : P.rec_flag)
     (td : P.type_declaration) : P.signature =
   let name = td.ptype_name in
   let loc = td.ptype_loc in
