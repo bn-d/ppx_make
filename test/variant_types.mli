@@ -1,7 +1,35 @@
-(*type tuple_v = Baisc of int
-| T_complex of (int, int option, int list, string, int[@default 42], string[@required])
-| T_complex_with_main of (int[@main], int option, int option[@main])
-[@@deriving_inline make][@@@end]*)
+type tuple_v =
+  | T_baisc of int
+  | T_option of int option
+  | T_complex of
+      int
+      * int option
+      * int list
+      * string
+      * (int[@default 1024])
+      * (string[@required])
+[@@deriving_inline make]
+
+include sig
+  [@@@ocaml.warning "-32"]
+
+  val make_t_baisc_of_tuple_v : v0:int -> unit -> tuple_v
+
+  val make_t_option_of_tuple_v : ?v0:int -> unit -> tuple_v
+
+  val make_t_complex_of_tuple_v :
+    v0:int ->
+    ?v1:int ->
+    ?v2:int list ->
+    ?v3:string ->
+    ?v4:(int[@default 1024]) ->
+    v5:(string[@required]) ->
+    unit ->
+    tuple_v
+end
+[@@ocaml.doc "@inline"]
+
+[@@@end]
 
 type record_v =
   | R_basic of { b1 : int }
