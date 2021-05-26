@@ -1,24 +1,6 @@
 module P = Ppxlib
 module Ast_helper = Ppxlib.Ast_helper
 
-let unsupported_error P.{ txt; loc } =
-  P.Location.raise_errorf ~loc "type %s cannot be derived" txt
-
-let make_type_decl_generator f =
-  P.Deriving.Generator.V2.make_noarg (fun ~ctxt (rec_flag, tds) ->
-      let loc = P.Expansion_context.Deriver.derived_item_loc ctxt in
-      tds |> List.map (f ~loc rec_flag) |> List.concat)
-
-let gen_make_name P.{ txt = name; loc } = P.{ txt = "make_" ^ name; loc }
-
-let gen_make_choice_name P.{ txt = name; _ } P.{ txt = choice_name; loc } =
-  let txt = String.lowercase_ascii ("make_" ^ choice_name ^ "_of_" ^ name) in
-  P.{ txt; loc }
-
-let gen_tuple_label_string index = "v" ^ string_of_int index
-
-let longident_loc_of_name P.{ txt; loc } = P.{ txt = P.Lident txt; loc }
-
 (* Core Type Utils *)
 
 let unit_core_type ~loc =
@@ -55,6 +37,15 @@ let strip_option (ct : P.core_type) =
   | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ]) -> in_ct
   | _ -> ct
 
+let default_expression_of_core_type ~loc (ct : P.core_type) =
+  let open P in
+  if is_core_type_list ct then
+    Some [%expr []]
+  else if is_core_type_string ct then
+    Some [%expr ""]
+  else
+    None
+
 (* Attributes Utils *)
 
 type attr_type = No_attr | Main | Required | Default of P.expression
@@ -83,3 +74,30 @@ let get_attributes (attrs : P.attribute list) =
       | _ -> No_attr)
       |> check_res ~loc:attr.attr_loc acc)
     No_attr attrs
+
+(* Misc. Utils *)
+
+let unsupported_error P.{ txt; loc } =
+  P.Location.raise_errorf ~loc "type %s cannot be derived" txt
+
+let make_type_decl_generator f =
+  P.Deriving.Generator.V2.make_noarg (fun ~ctxt (rec_flag, tds) ->
+      let loc = P.Expansion_context.Deriver.derived_item_loc ctxt in
+      tds |> List.map (f ~loc rec_flag) |> List.concat)
+
+let gen_make_name P.{ txt = name; loc } = P.{ txt = "make_" ^ name; loc }
+
+let gen_make_choice_name P.{ txt = name; _ } P.{ txt = choice_name; loc } =
+  let txt = String.lowercase_ascii ("make_" ^ choice_name ^ "_of_" ^ name) in
+  P.{ txt; loc }
+
+let gen_tuple_label_string index = "v" ^ string_of_int index
+
+let longident_loc_of_name P.{ txt; loc } = P.{ txt = P.Lident txt; loc }
+
+let add_choice_to_expr choice expr =
+  match choice with
+  | Some choice_name ->
+      let lid = longident_loc_of_name choice_name in
+      Ast_helper.Exp.construct lid (Some expr)
+  | None -> expr
