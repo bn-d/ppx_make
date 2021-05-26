@@ -5,6 +5,6 @@ let _ =
     >::: [
            Test_make_option.suite;
            Test_make_record.suite;
-           (* TODO Test_make_tuple.suite;*)
+           Test_make_tuple.suite;
            Test_make_variant.suite;
          ])

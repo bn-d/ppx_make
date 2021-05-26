@@ -15,6 +15,8 @@ let gen_make_choice_name P.{ txt = name; _ } P.{ txt = choice_name; loc } =
   let txt = String.lowercase_ascii ("make_" ^ choice_name ^ "_of_" ^ name) in
   P.{ txt; loc }
 
+let gen_tuple_label_string index = "v" ^ string_of_int (index + 1)
+
 let longident_loc_of_name P.{ txt; loc } = P.{ txt = P.Lident txt; loc }
 
 (* Core Type Utils *)

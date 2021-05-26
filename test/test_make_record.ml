@@ -22,8 +22,8 @@ let main _ = OUnit2.assert_equal { m1 = 127; m2 = 8128 } (make_m 127 8128)
 
 let required _ =
   OUnit2.assert_equal
-    { r1 = None; r2 = "bar"; r3 = Some 1729 }
-    (make_r ~r2:"bar" ~r3:(Some 1729) ())
+    { r1 = None; r2 = "cov"; r3 = Some 1729 }
+    (make_r ~r2:"cov" ~r3:(Some 1729) ())
 
 let complex_1 _ =
   OUnit2.assert_equal
