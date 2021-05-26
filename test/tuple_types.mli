@@ -3,7 +3,7 @@ type b = int * int [@@deriving_inline make]
 include sig
   [@@@ocaml.warning "-32"]
 
-  val make_b : v1:int -> v2:int -> unit -> b
+  val make_b : v0:int -> v1:int -> unit -> b
 end
 [@@ocaml.doc "@inline"]
 
@@ -14,7 +14,7 @@ type o = int option * int option [@@deriving_inline make]
 include sig
   [@@@ocaml.warning "-32"]
 
-  val make_o : ?v1:int -> ?v2:int -> unit -> o
+  val make_o : ?v0:int -> ?v1:int -> unit -> o
 end
 [@@ocaml.doc "@inline"]
 
@@ -25,7 +25,7 @@ type l = int list * int list [@@deriving_inline make]
 include sig
   [@@@ocaml.warning "-32"]
 
-  val make_l : ?v1:int list -> ?v2:int list -> unit -> l
+  val make_l : ?v0:int list -> ?v1:int list -> unit -> l
 end
 [@@ocaml.doc "@inline"]
 
@@ -36,7 +36,7 @@ type s = string * string [@@deriving_inline make]
 include sig
   [@@@ocaml.warning "-32"]
 
-  val make_s : ?v1:string -> ?v2:string -> unit -> s
+  val make_s : ?v0:string -> ?v1:string -> unit -> s
 end
 [@@ocaml.doc "@inline"]
 
@@ -47,7 +47,7 @@ type d = (int[@default 42]) * (int[@default 420]) [@@deriving_inline make]
 include sig
   [@@@ocaml.warning "-32"]
 
-  val make_d : ?v1:(int[@default 42]) -> ?v2:(int[@default 420]) -> unit -> d
+  val make_d : ?v0:(int[@default 42]) -> ?v1:(int[@default 420]) -> unit -> d
 end
 [@@ocaml.doc "@inline"]
 
@@ -60,7 +60,7 @@ include sig
   [@@@ocaml.warning "-32"]
 
   val make_r :
-    ?v1:int -> v2:(string[@required]) -> v3:(int option[@required]) -> unit -> r
+    ?v0:int -> v1:(string[@required]) -> v2:(int option[@required]) -> unit -> r
 end
 [@@ocaml.doc "@inline"]
 
@@ -79,12 +79,12 @@ include sig
   [@@@ocaml.warning "-32"]
 
   val make_complex :
-    v1:int ->
-    ?v2:int ->
-    ?v3:int list ->
-    ?v4:string ->
-    ?v5:(int[@default 1024]) ->
-    v6:(string[@required]) ->
+    v0:int ->
+    ?v1:int ->
+    ?v2:int list ->
+    ?v3:string ->
+    ?v4:(int[@default 1024]) ->
+    v5:(string[@required]) ->
     unit ->
     complex
 end

@@ -1,10 +1,21 @@
 open Variant_types
 
-let tuple_basic _ = failwith ""
+let tuple_basic _ =
+  OUnit2.assert_equal (T_baisc 32) (make_t_baisc_of_tuple_v ~v0:32 ())
 
-let tuple_complex_1 _ = failwith ""
+let tuple_option _ =
+  OUnit2.assert_equal (T_option None) (make_t_option_of_tuple_v ());
+  OUnit2.assert_equal (T_option (Some 2718))
+    (make_t_option_of_tuple_v ~v0:2718 ())
 
-let tuple_complex_2 _ = failwith ""
+let tuple_complex_1 _ =
+  OUnit2.assert_equal
+    (T_complex (32, None, [], "", 1024, "Z06"))
+    (make_t_complex_of_tuple_v ~v0:32 ~v5:"Z06" ());
+  OUnit2.assert_equal
+    (T_complex (32, Some 64, [ 128; 256; 512 ], "boom", 0, "Z06"))
+    (make_t_complex_of_tuple_v ~v0:32 ~v1:64 ~v2:[ 128; 256; 512 ] ~v3:"boom"
+       ~v4:0 ~v5:"Z06" ())
 
 let record_basic _ =
   OUnit2.assert_equal (R_basic { b1 = 32 }) (make_r_basic_of_record_v ~b1:32 ())
@@ -39,8 +50,8 @@ let suite =
   "variant"
   >::: [
          "tuple_basic" >:: tuple_basic;
+         "tuple_option" >:: tuple_option;
          "tuple_complex_1" >:: tuple_complex_1;
-         "tuple_complex_2" >:: tuple_complex_2;
          "record_basic" >:: record_basic;
          "record_complex_1" >:: record_complex_1;
          "record_complex_2" >:: record_complex_2;

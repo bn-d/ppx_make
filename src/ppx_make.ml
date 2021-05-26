@@ -125,7 +125,8 @@ let fun_expression_of_tuple ~loc ?choice (cts : P.core_type list) : P.expression
                      let open P in
                      [%expr Some [%e expr]]
                  | _, _ -> expr))
-      |> Ast_helper.Exp.tuple
+      |> (fun expr ->
+           match expr with [ expr ] -> expr | _ -> Ast_helper.Exp.tuple expr)
       |> (fun expr ->
            match choice with
            | Some choice_name ->
