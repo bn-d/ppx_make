@@ -8,10 +8,11 @@
 (license MIT)
 (authors "Boning <erebuxy@gmail.com>")
 (maintainers "Boning <erebuxy@gmail.com>")
+(documentation "https://github.com/erebuxy/ppx_make")
 
 (package
  (name ppx_make)
- (synopsis "ppxlib based make deriver")
+ (synopsis "Ppxlib based make deriver")
  (depends
   (dune (>= 2.0.0))
   (ppxlib (>= 0.10.0))
