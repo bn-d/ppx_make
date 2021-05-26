@@ -232,7 +232,7 @@ let str_item_of_variant_choice name (cd : P.constructor_declaration) :
     P.structure_item =
   let loc = cd.pcd_loc in
   Ast_helper.with_default_loc loc (fun () ->
-      if Option.is_some cd.pcd_res then
+      if cd.pcd_res != None then
         Utils.unsupported_error name
       else
         let pat =
@@ -278,7 +278,7 @@ let sig_item_of_variant_choice name (cd : P.constructor_declaration) :
     P.signature_item =
   let loc = cd.pcd_loc in
   Ast_helper.with_default_loc loc (fun () ->
-      if Option.is_some cd.pcd_res then
+      if cd.pcd_res != None then
         Utils.unsupported_error name
       else
         let fun_name = Utils.gen_make_choice_name name cd.pcd_name in
