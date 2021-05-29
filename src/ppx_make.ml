@@ -10,7 +10,7 @@ let fun_expression_of_option ~loc (ct : P.core_type) : P.expression =
       | No_attr -> [%expr fun ?value () -> value]
       | _ ->
           P.Location.raise_errorf ~loc
-            "option types only support `defalt` attribute")
+            "option types only support `default` attribute")
 
 let fun_expression_of_record ~loc ?choice (lds : P.label_declaration list) :
     P.expression =
