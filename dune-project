@@ -1,14 +1,14 @@
 (lang dune 2.7)
 (name ppx_make)
-(version "0.2.1")
+(version "0.2.2")
 
 (generate_opam_files true)
 
-(source (github erebuxy/ppx_make))
+(source (github bn-d/ppx_make))
 (license MIT)
-(authors "Boning <erebuxy@gmail.com>")
-(maintainers "Boning <erebuxy@gmail.com>")
-(documentation "https://github.com/erebuxy/ppx_make")
+(authors "Boning <me@boni.ng>")
+(maintainers "Boning <me@boni.ng>")
+(documentation "https://github.com/bn-d/ppx_make")
 
 (package
  (name ppx_make)

@@ -240,6 +240,12 @@ let str_item_of_variant_choice name (cd : P.constructor_declaration) :
         in
         let ct, expr =
           match cd.pcd_args with
+          | Pcstr_tuple [] ->
+              let lid = Utils.longident_loc_of_name cd.pcd_name in
+              let exp = Ast_helper.Exp.construct lid None in
+              ( fun_core_type_of_tuple ~loc name [],
+                let open P in
+                [%expr fun () -> [%e exp]] )
           | Pcstr_tuple cts ->
               ( fun_core_type_of_tuple ~loc name cts,
                 fun_expression_of_tuple ~loc ~choice:cd.pcd_name cts )
