@@ -6,8 +6,8 @@ module Ast_helper = Ppxlib.Ast_helper
 let unit_core_type ~loc =
   Ast_helper.Typ.constr ~loc P.{ txt = P.Lident "unit"; loc } []
 
-let core_type_of_name P.{ txt = name; loc } =
-  Ast_helper.Typ.constr ~loc P.{ txt = P.Lident name; loc } []
+let core_type_of_name ?(params = []) P.{ txt = name; loc } =
+  Ast_helper.Typ.constr ~loc P.{ txt = P.Lident name; loc } params
 
 let is_core_type_option (ct : P.core_type) =
   match ct.ptyp_desc with
