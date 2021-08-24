@@ -6,8 +6,8 @@ module Ast_helper = Ppxlib.Ast_helper
 let unit_core_type ~loc =
   Ast_helper.Typ.constr ~loc P.{ txt = P.Lident "unit"; loc } []
 
-let core_type_of_name P.{ txt = name; loc } =
-  Ast_helper.Typ.constr ~loc P.{ txt = P.Lident name; loc } []
+let core_type_of_name ?(params = []) P.{ txt = name; loc } =
+  Ast_helper.Typ.constr ~loc P.{ txt = P.Lident name; loc } params
 
 let is_core_type_option (ct : P.core_type) =
   match ct.ptyp_desc with
@@ -101,3 +101,13 @@ let add_choice_to_expr choice expr =
       let lid = longident_loc_of_name choice_name in
       Ast_helper.Exp.construct lid (Some expr)
   | None -> expr
+
+let params_core_type_of_type_decl ~loc (td : P.type_declaration) =
+  List.map
+    (fun (ct, (variance, _)) ->
+      match variance with
+      | P.NoVariance -> ct
+      | _ ->
+          P.Location.raise_errorf ~loc
+            "only `Invariant` is supported for variance of params")
+    td.ptype_params
