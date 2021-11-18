@@ -1,6 +1,5 @@
 module P = Ppxlib
 module Ast_helper = Ppxlib.Ast_helper
-module Utils = Ppx_make_utils
 
 (* generate function expression for option *)
 let fun_expression_of_option ~loc (ct : P.core_type) : P.expression =
