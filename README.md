@@ -1,4 +1,4 @@
-# ppx_make
+# [@@deriving make]
 [![OCaml](https://img.shields.io/badge/-OCaml-EC6813?logo=ocaml&labelColor=grey)](#)
 [![OCaml](https://github.com/bn-d/ppx_make/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/bn-d/ppx_make/actions/workflows/build.yml)
 
