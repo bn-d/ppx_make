@@ -13,7 +13,7 @@
 (package
  (name ppx_make)
  (synopsis "[@@deriving make]")
- (description "Ppxlib based make deriver")
+ (description "Ppxlib based [@@deriving] plugin to generate make functions")
  (depends
   (ppxlib (>= 0.10.0))
   (ounit2 :with-test)))
