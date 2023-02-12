@@ -8,6 +8,11 @@ let default _ =
   OUnit2.assert_equal (Some 7) @@ make_d ();
   OUnit2.assert_equal (Some 1) @@ make_d ~value:1 ()
 
+let option_t _ =
+  OUnit2.assert_equal None @@ make_c ();
+  OUnit2.assert_equal (Some 1) @@ make_c ~value:1 ()
+
 let suite =
   let open OUnit2 in
-  "option" >::: [ "basic" >:: basic; "default" >:: default ]
+  "option"
+  >::: [ "basic" >:: basic; "default" >:: default; "option_t" >:: option_t ]

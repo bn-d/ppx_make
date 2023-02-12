@@ -31,6 +31,17 @@ end
 
 [@@@end]
 
+type a = { a1 : int array } [@@deriving_inline make]
+
+include sig
+  [@@@ocaml.warning "-32"]
+
+  val make_a : ?a1:int array -> unit -> a
+end
+[@@ocaml.doc "@inline"]
+
+[@@@end]
+
 type s = { s1 : string } [@@deriving_inline make]
 
 include sig
@@ -41,8 +52,6 @@ end
 [@@ocaml.doc "@inline"]
 
 [@@@end]
-
-(*type a = { a1 : int array }[@@deriving_inline make][@@@end]*)
 
 (*type q = { q1 : int seq }[@@deriving_inline make][@@@end]*)
 
@@ -114,7 +123,7 @@ end
 type complex_with_main = {
   cm1 : int; [@main]
   cm2 : int option;
-  cm3 : int option; [@main]
+  cm3 : int Option.t; [@main]
 }
 [@@deriving_inline make]
 
@@ -122,7 +131,7 @@ include sig
   [@@@ocaml.warning "-32"]
 
   val make_complex_with_main :
-    ?cm2:int -> int -> int option -> complex_with_main
+    ?cm2:int -> int -> int Option.t -> complex_with_main
 end
 [@@ocaml.doc "@inline"]
 

@@ -19,3 +19,14 @@ end
 [@@ocaml.doc "@inline"]
 
 [@@@end]
+
+type c = int Option.t [@@deriving_inline make]
+
+include sig
+  [@@@ocaml.warning "-32"]
+
+  val make_c : ?value:int -> unit -> c
+end
+[@@ocaml.doc "@inline"]
+
+[@@@end]

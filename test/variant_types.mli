@@ -14,7 +14,6 @@ include sig
   [@@@ocaml.warning "-32"]
 
   val make_t_baisc_of_tuple_v : v0:int -> unit -> tuple_v
-
   val make_t_option_of_tuple_v : ?v0:int -> unit -> tuple_v
 
   val make_t_complex_of_tuple_v :
