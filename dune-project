@@ -1,6 +1,6 @@
 (lang dune 2.7)
 (name ppx_make)
-(version "0.3.1")
+(version "0.3.2")
 
 (generate_opam_files true)
 
