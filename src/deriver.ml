@@ -210,11 +210,12 @@ let str_item_of_core_type (name, params) (ct : P.core_type) : P.structure_item =
             (* T1 * ... * Tn *)
             ( fun_core_type_of_tuple ~loc (name, params) cts,
               fun_expression_of_tuple ~loc cts )
-        | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ]) ->
+        | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ])
+        | Ptyp_constr ({ txt = Ldot (Lident "Option", "t"); _ }, [ in_ct ]) ->
             (* T option *)
             ( fun_core_type_of_option ~loc (name, params) in_ct,
               fun_expression_of_option ~loc ct )
-        | _ -> Utils.unsupported_error name
+        | _ -> Utils.unsupported_error "core type" name
       in
       let open P in
       [%stri let ([%p pat] : [%t fun_ct]) = [%e expr]])
@@ -235,7 +236,7 @@ let str_item_of_variant_choice (name, params) (cd : P.constructor_declaration) :
   let loc = cd.pcd_loc in
   Ast_helper.with_default_loc loc (fun () ->
       if cd.pcd_res != None then
-        Utils.unsupported_error name
+        Utils.unsupported_error "constructor declaration" name
       else
         let pat =
           Ast_helper.Pat.var @@ Utils.gen_make_choice_name name cd.pcd_name
@@ -267,10 +268,11 @@ let sig_item_of_core_type (name, params) (ct : P.core_type) : P.signature_item =
       | Ptyp_tuple cts ->
           (* T1 * ... * Tn *)
           fun_core_type_of_tuple ~loc (name, params) cts
-      | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ]) ->
+      | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ])
+      | Ptyp_constr ({ txt = Ldot (Lident "Option", "t"); _ }, [ in_ct ]) ->
           (* T option *)
           fun_core_type_of_option ~loc (name, params) in_ct
-      | _ -> Utils.unsupported_error name)
+      | _ -> Utils.unsupported_error "core type" name)
       |> Ast_helper.Val.mk fun_name
       |> Ast_helper.Sig.value)
 
@@ -290,7 +292,7 @@ let sig_item_of_variant_choice (name, params) (cd : P.constructor_declaration) :
   let loc = cd.pcd_loc in
   Ast_helper.with_default_loc loc (fun () ->
       if cd.pcd_res != None then
-        Utils.unsupported_error name
+        Utils.unsupported_error "constructor declaration" name
       else
         let fun_name = Utils.gen_make_choice_name name cd.pcd_name in
         (match cd.pcd_args with
@@ -317,7 +319,7 @@ let structure_of_type_decl
   | { ptype_kind = Ptype_record lds; _ } ->
       (* type t = {l: T; ...} *)
       [ str_item_of_record ~loc (name, params) lds ]
-  | _ -> Utils.unsupported_error name
+  | _ -> Utils.unsupported_error "type declaration" name
 
 (* generate signature for type declaration *)
 let signature_of_type_decl
@@ -337,10 +339,8 @@ let signature_of_type_decl
   | { ptype_kind = Ptype_record lds; _ } ->
       (* type t = {l: T; ...} *)
       [ sig_item_of_record ~loc (name, params) lds ]
-  | _ -> Utils.unsupported_error name
+  | _ -> Utils.unsupported_error "type declaration" name
 
 let str_type_decl = Utils.make_type_decl_generator structure_of_type_decl
-
 let sig_type_decl = Utils.make_type_decl_generator signature_of_type_decl
-
 let deriver = P.Deriving.add "make" ~str_type_decl ~sig_type_decl

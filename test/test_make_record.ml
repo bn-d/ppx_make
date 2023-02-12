@@ -10,6 +10,10 @@ let list_ _ =
   OUnit2.assert_equal { l1 = [] } (make_l ());
   OUnit2.assert_equal { l1 = [ 1; 1; 2; 3 ] } (make_l ~l1:[ 1; 1; 2; 3 ] ())
 
+let array_ _ =
+  OUnit2.assert_equal { a1 = [||] } (make_a ());
+  OUnit2.assert_equal { a1 = [| 1; 1; 2; 3 |] } (make_a ~a1:[| 1; 1; 2; 3 |] ())
+
 let string_ _ =
   OUnit2.assert_equal { s1 = "" } (make_s ());
   OUnit2.assert_equal { s1 = "foo" } (make_s ~s1:"foo" ())
@@ -56,6 +60,7 @@ let suite =
          "basic" >:: basic;
          "option" >:: option_;
          "list" >:: list_;
+         "array" >:: array_;
          "string" >:: string_;
          "default" >:: default;
          "required" >:: required;

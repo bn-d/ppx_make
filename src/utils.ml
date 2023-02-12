@@ -11,36 +11,51 @@ let core_type_of_name ?(params = []) P.{ txt = name; loc } =
 
 let is_core_type_option (ct : P.core_type) =
   match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "option"; _ }, _) -> true
+  | Ptyp_constr ({ txt = Lident "option"; _ }, _)
+  | Ptyp_constr ({ txt = Ldot (Lident "Option", "t"); _ }, _) ->
+      true
   | _ -> false
 
 let is_core_type_list (ct : P.core_type) =
   match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "list"; _ }, _) -> true
+  | Ptyp_constr ({ txt = Lident "list"; _ }, _)
+  | Ptyp_constr ({ txt = Ldot (Lident "List", "t"); _ }, _) ->
+      true
+  | _ -> false
+
+let is_core_type_array (ct : P.core_type) =
+  match ct.ptyp_desc with
+  | Ptyp_constr ({ txt = Lident "array"; _ }, _)
+  | Ptyp_constr ({ txt = Ldot (Lident "Array", "t"); _ }, _) ->
+      true
   | _ -> false
 
 let is_core_type_string (ct : P.core_type) =
   match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "string"; _ }, []) -> true
-  | _ -> false
-
-let is_core_type_optional (ct : P.core_type) =
-  match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "option"; _ }, _)
-  | Ptyp_constr ({ txt = Lident "list"; _ }, _)
-  | Ptyp_constr ({ txt = Lident "string"; _ }, []) ->
+  | Ptyp_constr ({ txt = Lident "string"; _ }, [])
+  | Ptyp_constr ({ txt = Ldot (Lident "String", "t"); _ }, _) ->
       true
   | _ -> false
 
+let is_core_type_optional (ct : P.core_type) =
+  is_core_type_option ct
+  || is_core_type_list ct
+  || is_core_type_array ct
+  || is_core_type_string ct
+
 let strip_option (ct : P.core_type) =
   match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ]) -> in_ct
+  | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ])
+  | Ptyp_constr ({ txt = Ldot (Lident "Option", "t"); _ }, [ in_ct ]) ->
+      in_ct
   | _ -> ct
 
 let default_expression_of_core_type ~loc (ct : P.core_type) =
   let open P in
   if is_core_type_list ct then
     Some [%expr []]
+  else if is_core_type_array ct then
+    Some [%expr Array.of_list []]
   else if is_core_type_string ct then
     Some [%expr ""]
   else
@@ -77,8 +92,8 @@ let get_attributes (attrs : P.attribute list) =
 
 (* Misc. Utils *)
 
-let unsupported_error P.{ txt; loc } =
-  P.Location.raise_errorf ~loc "type %s cannot be derived" txt
+let unsupported_error str P.{ txt; loc } =
+  P.Location.raise_errorf ~loc "%s %s cannot be derived" str txt
 
 let make_type_decl_generator f =
   P.Deriving.Generator.V2.make_noarg (fun ~ctxt (rec_flag, tds) ->
@@ -92,7 +107,6 @@ let gen_make_choice_name P.{ txt = name; _ } P.{ txt = choice_name; loc } =
   P.{ txt; loc }
 
 let gen_tuple_label_string index = "v" ^ string_of_int index
-
 let longident_loc_of_name P.{ txt; loc } = P.{ txt = P.Lident txt; loc }
 
 let add_choice_to_expr choice expr =

@@ -1,6 +1,6 @@
 (lang dune 2.7)
 (name ppx_make)
-(version "0.3.0")
+(version "0.3.1")
 
 (generate_opam_files true)
 
@@ -12,7 +12,8 @@
 
 (package
  (name ppx_make)
- (synopsis "Ppxlib based make deriver")
+ (synopsis "[@@deriving make]")
+ (description "Ppxlib based make deriver")
  (depends
   (ppxlib (>= 0.10.0))
   (ounit2 :with-test)))

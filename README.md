@@ -10,10 +10,7 @@ ppxlib based make deriver
 $ opam install ppx_make
 ```
 
-## Usage
-To use this library, add `(preprocess (pps ppx_make))` to the library/executable configuration in `dune` file.
-
-## Syntax
+## Example
 ```ocaml
 type my_type = {
   my_field : int;
@@ -34,4 +31,3 @@ val make_my_type :
   unit ->
   my_type
 ```
-Please check the [test](test) for more examples.

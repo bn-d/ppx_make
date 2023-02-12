@@ -39,9 +39,7 @@ include sig
   [@@@ocaml.warning "-32"]
 
   val make_ok_of_poly_var : v0:'a -> unit -> ('a, 'b) poly_var
-
   val make_error_of_poly_var : v0:'b -> unit -> ('a, 'b) poly_var
-
   val make_other_of_poly_var : unit -> ('a, 'b) poly_var
 end
 [@@ocaml.doc "@inline"]
