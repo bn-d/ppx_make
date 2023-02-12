@@ -107,7 +107,7 @@ size 1. Inline record is also supported.
 
 {2 Attributes}
 
-Attributes may be used to alter the behavior of the derived [make] function.
+Attributes may be used to alter the behavior of the derived make function.
 
 {3 [[@default]]}
 
