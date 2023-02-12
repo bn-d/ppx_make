@@ -1,0 +1,145 @@
+{0 [[@@deriving make]]}
+
+ppxlib based make deriver
+
+{1 Usage}
+
+To use [[@@deriving make]], add [(preprocess (pps ppx_make))] to the library or
+executable configuration in dune file.
+
+{1 Example}
+
+{[
+  type my_type = {
+    my_field : int;
+    my_option : int option;
+    my_list : int list;
+    my_string : string;
+    my_default : int; [@default 1024]
+  }
+  [@@deriving make]
+
+  (* the deriver will automatically generate the following function *)
+  val make_my_type :
+    my_field:int ->
+    ?my_option:int ->
+    ?my_list:int list ->
+    ?my_string:string ->
+    ?my_default:int ->
+    unit ->
+    my_type
+]}
+
+{1 Syntax}
+
+When tagging supported types with [[@@deriving make]], make functions will be
+derived accordingly.
+
+{2 Supported Types}
+
+{3 Records}
+
+For a record type [t], function [make_t] will be derived. By default, each field will be
+corresponded to a labeled argument, where the label is the same as the field
+name. If the field has type of [option], [list], [array] or [string], the argument
+will be optional and have a default value of [None], [[]], [[||]] or [""]. The
+function will finally take an [unit] and return the constructed [t].
+
+{[
+  type t = {
+    field : int;
+    opt_field : int option;
+    list_field : int list;
+  }
+  [@@deriving make]
+
+  val make_t : field:int -> ?opt_field:int -> ?list_field:int list -> unit -> t
+]}
+
+{3 Tuples}
+
+For a tuple type [t], function [make_t] will be derived. Each value in the tuple will be
+corresponded to a labeled argument. The first value will be corresponded to
+labeled argument [v0], the second value to [v1] and vice versa. The optionality
+of the arguments follows the same rule as that of the record. The function will
+finally take an [unit] and return the constructed [t].
+
+{[
+  type t = int * int option * int list [@@deriving make]
+
+  val make_t : v0:int -> ?v1:int -> ?v2:int list -> unit -> t
+]}
+
+{3 Options}
+
+For an option type [t], function [make_t] will be derived. The function will take an
+optional argument [?value] and an [unit], and then return the constructed [t].
+
+{[
+  type t = int option [@@deriving make]
+
+  val make_t : ?value:int -> unit -> t
+]}
+
+{3 Variants}
+
+For a variant type [t], a make function will be derived for each case of the
+variant. For a case [C] in variant [t], function [make_c_of_t] will be derived. If the
+case is constant, the function will only take an [unit] and return the constant
+immediately. In other cases, the signature of the function will follow the rules
+described above. For case with only 1 argument, it will be considered as a tuple of
+size 1. Inline record is also supported.
+
+{[
+  type t =
+    | Constant
+    | Tuple of int * int option
+    | Record of {
+        field : int;
+        opt_field : int option;
+      }
+  [@@deriving make]
+
+  val make_constant_of_t : unit -> t
+  val make_tuple_of_t : v0:int -> ?v1:int -> unit -> t
+  val make_record_of_t : field:int -> ?opt_field:int -> unit -> t
+]}
+
+{2 Attributes}
+
+Attributes may be used to alter the behavior of the derived [make] function.
+
+{3 [[@default]]}
+
+Set the default value of a field, and make the corresponding labeled argument
+optional.
+
+{[
+  type t = { field : int [@default 42] } [@@deriving make]
+
+  val make_t : ?field:int -> unit -> t
+]}
+
+{3 [[@required]]}
+
+Make the corresponding argument of an optional field (i.e. [field: int option])
+required.
+
+{[
+  type t = { field : int option [@required] } [@@deriving make]
+
+  val make_t : field:int option -> unit -> t
+]}
+
+{3 [[@main]]}
+
+(Only apply to record) Convert a labeled argument into a positional argument.
+The make function will no longer require the [unit] at the end. Multiple
+fields can be tagged with this attribute within a single record. The order of the
+arguments will be the same as that of the fields.
+
+{[
+  type t = { field : int option [@main] } [@@deriving make]
+
+  val make_t : int option -> t
+]}

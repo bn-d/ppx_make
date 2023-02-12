@@ -1,7 +1,7 @@
 type b = { b1 : int } [@@deriving make]
 type o = { o1 : int option } [@@deriving make]
 type l = { l1 : int list } [@@deriving make]
-type a = { a1 : int array }[@@deriving make]
+type a = { a1 : int array } [@@deriving make]
 type s = { s1 : string } [@@deriving make]
 
 (*type q = { q1 : int seq }[@@deriving make]*)
