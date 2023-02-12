@@ -8,7 +8,7 @@
 (license MIT)
 (authors "Boning <me@boni.ng>")
 (maintainers "Boning <me@boni.ng>")
-(documentation "https://github.com/bn-d/ppx_make")
+(documentation "https://boni.ng/ppx_make/ppx_make/index.html")
 
 (package
  (name ppx_make)

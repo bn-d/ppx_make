@@ -7,7 +7,7 @@ maintainer: ["Boning <me@boni.ng>"]
 authors: ["Boning <me@boni.ng>"]
 license: "MIT"
 homepage: "https://github.com/bn-d/ppx_make"
-doc: "https://github.com/bn-d/ppx_make"
+doc: "https://boni.ng/ppx_make/ppx_make/index.html"
 bug-reports: "https://github.com/bn-d/ppx_make/issues"
 depends: [
   "dune" {>= "2.7"}

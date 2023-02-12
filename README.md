@@ -1,6 +1,7 @@
 # [@@deriving make]
 [![OCaml](https://img.shields.io/badge/-OCaml-EC6813?logo=ocaml&labelColor=grey)](#)
-[![OCaml](https://github.com/bn-d/ppx_make/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/bn-d/ppx_make/actions/workflows/build.yml)
+[![CI](https://github.com/bn-d/ppx_make/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/bn-d/ppx_make/actions/workflows/build.yml)
+[![GitHub release status](https://img.shields.io/github/v/release/bn-d/ppx_make)](https://github.com/bn-d/ppx_make/releases)
 
 ppxlib based make deriver
 
@@ -9,6 +10,9 @@ ppxlib based make deriver
 ```sh
 $ opam install ppx_make
 ```
+
+## Usage
+Please see the [documentation](https://boni.ng/ppx_make/ppx_make/index.html).
 
 ## Example
 ```ocaml
