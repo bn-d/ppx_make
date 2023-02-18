@@ -308,7 +308,7 @@ let structure_of_type_decl
     (td : P.type_declaration) : P.structure =
   let loc = td.ptype_loc in
   let name = td.ptype_name in
-  let params = Utils.params_core_type_of_type_decl ~loc td in
+  let params = Utils.params_core_type_of_type_decl td in
   match td with
   | { ptype_kind = Ptype_abstract; ptype_manifest = Some ct; _ } ->
       (* type t = T0 *)
@@ -328,7 +328,7 @@ let signature_of_type_decl
     (td : P.type_declaration) : P.signature =
   let loc = td.ptype_loc in
   let name = td.ptype_name in
-  let params = Utils.params_core_type_of_type_decl ~loc td in
+  let params = Utils.params_core_type_of_type_decl td in
   match td with
   | { ptype_kind = Ptype_abstract; ptype_manifest = Some ct; _ } ->
       (* type t = T0 *)

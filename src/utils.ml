@@ -116,5 +116,5 @@ let add_choice_to_expr choice expr =
       Ast_helper.Exp.construct lid (Some expr)
   | None -> expr
 
-let params_core_type_of_type_decl ~loc:_ (td : P.type_declaration) =
+let params_core_type_of_type_decl (td : P.type_declaration) =
   List.map (fun (ct, _) -> ct) td.ptype_params
