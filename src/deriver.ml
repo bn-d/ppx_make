@@ -14,48 +14,33 @@ let fun_expression_of_option ~loc (ct : core_type) : expression =
 let fun_expression_of_record ~loc ?choice (lds : label_declaration list) :
     expression =
   Ast_helper.with_default_loc loc (fun () ->
-      let attrs : Utils.attr_type list =
-        List.map (fun ld -> Utils.get_attributes ld.pld_attributes) lds
+      let arg_types =
+        List.map
+          (fun { pld_loc = loc; pld_name; pld_type; pld_attributes = attrs; _ } ->
+            Arg_type.of_core_type ~loc ~attrs pld_name pld_type)
+          lds
+        |> List.rev
       in
-      let label_pats, main_pats =
-        List.fold_left2
-          (fun (label_pats, main_pats) { pld_name; pld_type; pld_loc; _ }
-               (attr : Utils.attr_type) ->
-            let loc = pld_loc in
-            Ast_helper.with_default_loc loc (fun () ->
-                let pat = Ast_helper.Pat.var pld_name
-                and optional = Utils.is_core_type_optional pld_type in
-                match (attr, optional) with
-                | Main, _ -> (label_pats, pat :: main_pats)
-                | Default def, _ ->
-                    let arg_label = Optional pld_name.txt in
-                    ((arg_label, Some def, pat) :: label_pats, main_pats)
-                | No_attr, true ->
-                    let arg_label = Optional pld_name.txt
-                    and def =
-                      Utils.default_expression_of_core_type ~loc pld_type
-                    in
-                    ((arg_label, def, pat) :: label_pats, main_pats)
-                | _, _ ->
-                    let arg_label = Labelled pld_name.txt in
-                    ((arg_label, None, pat) :: label_pats, main_pats)))
-          ([], []) lds attrs
+      let main_pats =
+        List.map
+          (function (_, _, Arg_type.Nolabel) as t -> Some t | _ -> None)
+          arg_types
+        |> List.filter Option.is_some
+        |> List.map (fun opt ->
+               opt
+               |> Option.get
+               |> fun arg ->
+               let _, _, pat, _ = Arg_type.to_asttypes arg in
+               pat)
       in
       let main_pats =
         if main_pats = [] then [ Ast_helper.Pat.any () ] else main_pats
       in
-      lds
-      |> List.map2
-           (fun attr { pld_name; pld_type; pld_loc; _ } ->
-             let loc = pld_loc in
-             Ast_helper.with_default_loc loc (fun () ->
-                 let lid = Utils.longident_loc_of_name pld_name in
-                 let option_ = Utils.is_core_type_option pld_type
-                 and expr = Ast_helper.Exp.ident lid in
-                 match (attr, option_) with
-                 | Utils.Default _, true -> (lid, [%expr Some [%e expr]])
-                 | _, _ -> (lid, expr)))
-           attrs
+      arg_types
+      |> List.map (fun (name, _, _) ->
+             let lid = Utils.longident_loc_of_name name in
+             let expr = Ast_helper.Exp.ident lid in
+             (lid, expr))
       |> (fun labels -> Ast_helper.Exp.record labels None)
       |> Utils.add_choice_to_expr choice
       |> fun expr ->
@@ -64,9 +49,15 @@ let fun_expression_of_record ~loc ?choice (lds : label_declaration list) :
         expr main_pats
       |> fun expr ->
       List.fold_left
-        (fun acc (arg_label, default_expr, cur_pat) ->
-          Ast_helper.Exp.fun_ arg_label default_expr cur_pat acc)
-        expr label_pats)
+        (fun acc arg_type ->
+          match arg_type with
+          | _, _, Arg_type.Nolabel -> acc
+          | _ ->
+              let arg_label, default_expr, pat, _ =
+                Arg_type.to_asttypes ~is_tuple:true arg_type
+              in
+              Ast_helper.Exp.fun_ arg_label default_expr pat acc)
+        expr arg_types)
 
 (* generate function expression for tuple *)
 let fun_expression_of_tuple ~loc ?choice (cts : core_type list) : expression =
