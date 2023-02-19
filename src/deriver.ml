@@ -72,12 +72,11 @@ let fun_expression_of_record ~loc ?choice (lds : label_declaration list) :
 let fun_expression_of_tuple ~loc ?choice (cts : core_type list) : expression =
   Ast_helper.with_default_loc loc (fun () ->
       let arg_types =
-        cts
-        |> List.mapi
-             (fun index ({ ptyp_loc = loc; ptyp_attributes = attrs; _ } as ct)
-             ->
-               let name = Utils.gen_tuple_label ~loc index in
-               Arg_type.of_core_type ~loc ~attrs name ct)
+        List.mapi
+          (fun idx ({ ptyp_loc = loc; ptyp_attributes = attrs; _ } as ct) ->
+            let name = Utils.gen_tuple_label ~loc idx in
+            Arg_type.of_core_type ~loc ~attrs name ct)
+          cts
       in
       arg_types
       |> List.map (fun (name, _, _) ->
@@ -108,18 +107,19 @@ let fun_core_type_of_option ~loc (name, params) (in_ct : core_type) : core_type
 let fun_core_type_of_record ~loc (name, params) (lds : label_declaration list) :
     core_type =
   Ast_helper.with_default_loc loc (fun () ->
-      let label_cts, main_cts =
-        List.fold_left
-          (fun (label_cts, main_cts) { pld_name; pld_type; pld_attributes; _ } ->
-            let attr : Utils.attr_type = Utils.get_attributes pld_attributes
-            and optional = Utils.is_core_type_optional pld_type in
-            match (attr, optional) with
-            | Main, _ -> (label_cts, pld_type :: main_cts)
-            | Default _, _ | No_attr, true ->
-                let ct = Utils.strip_option pld_type in
-                ((Optional pld_name.txt, ct) :: label_cts, main_cts)
-            | _, _ -> ((Labelled pld_name.txt, pld_type) :: label_cts, main_cts))
-          ([], []) lds
+      let arg_types =
+        List.map
+          (fun { pld_loc = loc; pld_name; pld_type; pld_attributes = attrs; _ } ->
+            Arg_type.of_core_type ~loc ~attrs pld_name pld_type)
+          lds
+        |> List.rev
+      in
+      let main_cts =
+        List.map
+          (function _, ct, Arg_type.Nolabel -> Some ct | _ -> None)
+          arg_types
+        |> List.filter Option.is_some
+        |> List.map Option.get
       in
       let main_cts =
         if main_cts = [] then [ Utils.unit_core_type ~loc ] else main_cts
@@ -132,19 +132,24 @@ let fun_core_type_of_record ~loc (name, params) (lds : label_declaration list) :
         ct main_cts
       |> fun ct ->
       List.fold_left
-        (fun acc (arg_label, cur) -> Ast_helper.Typ.arrow arg_label cur acc)
-        ct label_cts)
+        (fun acc arg_type ->
+          match arg_type with
+          | _, _, Arg_type.Nolabel -> acc
+          | _ ->
+              let arg_label, _, _, ct = Arg_type.to_asttypes arg_type in
+              Ast_helper.Typ.arrow arg_label ct acc)
+        ct arg_types)
 
 (* generate function core type for tuple *)
 let fun_core_type_of_tuple ~loc (name, params) (cts : core_type list) :
     core_type =
   Ast_helper.with_default_loc loc (fun () ->
       let arg_types =
-        cts
-        |> List.mapi (fun index ct ->
-               let name = Utils.gen_tuple_label ~loc:ct.ptyp_loc index in
-               Arg_type.of_core_type ~loc:ct.ptyp_loc ~attrs:ct.ptyp_attributes
-                 name ct)
+        List.mapi
+          (fun idx ({ ptyp_loc = loc; ptyp_attributes = attrs; _ } as ct) ->
+            let name = Utils.gen_tuple_label ~loc idx in
+            Arg_type.of_core_type ~loc ~attrs name ct)
+          cts
       in
       name
       |> Utils.core_type_of_name ~params
