@@ -59,10 +59,9 @@ let default_expression_of_core_type ~loc (ct : core_type) =
   else
     None
 
-(* Attributes Utils *)
-
 type attr_type = No_attr | Main | Required | Default of expression
 
+(* Attributes Utils *)
 let get_attributes (attrs : attribute list) =
   let check_res ~loc acc cur =
     match (acc, cur) with
@@ -104,7 +103,7 @@ let gen_make_choice_name { txt = name; _ } { txt = choice_name; loc } =
   let txt = String.lowercase_ascii ("make_" ^ choice_name ^ "_of_" ^ name) in
   { txt; loc }
 
-let gen_tuple_label_string index = "v" ^ string_of_int index
+let gen_tuple_label ~loc index = { txt = "v" ^ string_of_int index; loc }
 let longident_loc_of_name { txt; loc } = { txt = Lident txt; loc }
 
 let add_choice_to_expr choice expr =

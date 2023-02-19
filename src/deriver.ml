@@ -71,54 +71,30 @@ let fun_expression_of_record ~loc ?choice (lds : label_declaration list) :
 (* generate function expression for tuple *)
 let fun_expression_of_tuple ~loc ?choice (cts : core_type list) : expression =
   Ast_helper.with_default_loc loc (fun () ->
-      let cts_attrs =
+      let arg_types =
         cts
-        |> List.map (fun ct -> Utils.get_attributes ct.ptyp_attributes)
-        |> List.combine cts
+        |> List.mapi (fun index ct ->
+               let name = Utils.gen_tuple_label ~loc:ct.ptyp_loc index in
+               Arg_type.of_core_type ~loc:ct.ptyp_loc ~attrs:ct.ptyp_attributes
+                 name ct)
       in
-      let label_pats =
-        cts_attrs
-        |> List.mapi (fun index ((ct : core_type), (attr : Utils.attr_type)) ->
-               let loc = ct.ptyp_loc in
-               Ast_helper.with_default_loc loc (fun () ->
-                   let label_name = Utils.gen_tuple_label_string index in
-                   let pat = Ast_helper.Pat.var { txt = label_name; loc }
-                   and optional = Utils.is_core_type_optional ct in
-                   match (attr, optional) with
-                   | Main, _ ->
-                       Location.raise_errorf ~loc:ct.ptyp_loc
-                         "tuple types do not support `main` attribute"
-                   | Default def, _ -> (Optional label_name, Some def, pat)
-                   | No_attr, true ->
-                       let def =
-                         Utils.default_expression_of_core_type ~loc ct
-                       in
-                       (Optional label_name, def, pat)
-                   | _, _ -> (Labelled label_name, None, pat)))
-        |> List.rev
-      in
-      cts_attrs
-      |> List.mapi (fun index ((ct : core_type), (attr : Utils.attr_type)) ->
-             let loc = ct.ptyp_loc in
-             Ast_helper.with_default_loc loc (fun () ->
-                 let option_ = Utils.is_core_type_option ct in
-                 let lid =
-                   Utils.longident_loc_of_name
-                     { txt = Utils.gen_tuple_label_string index; loc }
-                 in
-                 let expr = Ast_helper.Exp.ident lid in
-                 match (attr, option_) with
-                 | Utils.Default _, true -> [%expr Some [%e expr]]
-                 | _, _ -> expr))
+      arg_types
+      |> List.map (fun (name, _, _) ->
+             Ast_helper.with_default_loc name.loc (fun () ->
+                 let lid = Utils.longident_loc_of_name name in
+                 Ast_helper.Exp.ident lid))
       |> (fun exprs ->
            match exprs with [ expr ] -> expr | _ -> Ast_helper.Exp.tuple exprs)
       |> Utils.add_choice_to_expr choice
       |> Ast_helper.Exp.fun_ Nolabel None (Ast_helper.Pat.any ())
       |> fun expr ->
       List.fold_left
-        (fun acc (arg_label, default_expr, cur_pat) ->
-          Ast_helper.Exp.fun_ arg_label default_expr cur_pat acc)
-        expr label_pats)
+        (fun acc arg_type ->
+          let arg_label, default_expr, pat, _ =
+            Arg_type.to_asttypes ~is_tuple:true arg_type
+          in
+          Ast_helper.Exp.fun_ arg_label default_expr pat acc)
+        expr (List.rev arg_types))
 
 (* generate function core type for option *)
 let fun_core_type_of_option ~loc (name, params) (in_ct : core_type) : core_type
@@ -162,31 +138,24 @@ let fun_core_type_of_record ~loc (name, params) (lds : label_declaration list) :
 let fun_core_type_of_tuple ~loc (name, params) (cts : core_type list) :
     core_type =
   Ast_helper.with_default_loc loc (fun () ->
-      let label_cts =
+      let arg_types =
         cts
-        |> List.mapi (fun index (ct : core_type) ->
-               let attr : Utils.attr_type =
-                 Utils.get_attributes ct.ptyp_attributes
-               and optional = Utils.is_core_type_optional ct
-               and label_name = Utils.gen_tuple_label_string index in
-               match (attr, optional) with
-               | Main, _ ->
-                   Location.raise_errorf ~loc:ct.ptyp_loc
-                     "tuple types do not support `main` attribute"
-               | Default _, _ | No_attr, true ->
-                   let ct = Utils.strip_option ct in
-                   (Optional label_name, ct)
-               | _, _ -> (Labelled label_name, ct))
-        |> List.rev
+        |> List.mapi (fun index ct ->
+               let name = Utils.gen_tuple_label ~loc:ct.ptyp_loc index in
+               Arg_type.of_core_type ~loc:ct.ptyp_loc ~attrs:ct.ptyp_attributes
+                 name ct)
       in
-
       name
       |> Utils.core_type_of_name ~params
       |> Ast_helper.Typ.arrow Nolabel (Utils.unit_core_type ~loc)
       |> fun ct ->
       List.fold_left
-        (fun acc (arg_label, cur) -> Ast_helper.Typ.arrow arg_label cur acc)
-        ct label_cts)
+        (fun acc arg_type ->
+          let arg_label, _, _, ct =
+            Arg_type.to_asttypes ~is_tuple:true arg_type
+          in
+          Ast_helper.Typ.arrow arg_label ct acc)
+        ct (arg_types |> List.rev))
 
 (* generate structure item for core type *)
 let str_item_of_core_type (name, params) (ct : core_type) : structure_item =
