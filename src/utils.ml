@@ -1,46 +1,8 @@
 open Ppxlib
 
 (* Core Type Utils *)
-
-let unit_core_type ~loc =
-  Ast_helper.Typ.constr ~loc { txt = Lident "unit"; loc } []
-
 let core_type_of_name ?(params = []) { txt = name; loc } =
   Ast_helper.Typ.constr ~loc { txt = Lident name; loc } params
-
-let is_core_type_option (ct : core_type) =
-  match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "option"; _ }, _)
-  | Ptyp_constr ({ txt = Ldot (Lident "Option", "t"); _ }, _) ->
-      true
-  | _ -> false
-
-let is_core_type_list (ct : core_type) =
-  match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "list"; _ }, _)
-  | Ptyp_constr ({ txt = Ldot (Lident "List", "t"); _ }, _) ->
-      true
-  | _ -> false
-
-let is_core_type_array (ct : core_type) =
-  match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "array"; _ }, _)
-  | Ptyp_constr ({ txt = Ldot (Lident "Array", "t"); _ }, _) ->
-      true
-  | _ -> false
-
-let is_core_type_string (ct : core_type) =
-  match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "string"; _ }, [])
-  | Ptyp_constr ({ txt = Ldot (Lident "String", "t"); _ }, _) ->
-      true
-  | _ -> false
-
-let is_core_type_optional (ct : core_type) =
-  is_core_type_option ct
-  || is_core_type_list ct
-  || is_core_type_array ct
-  || is_core_type_string ct
 
 let strip_option (ct : core_type) =
   match ct.ptyp_desc with
@@ -48,44 +10,6 @@ let strip_option (ct : core_type) =
   | Ptyp_constr ({ txt = Ldot (Lident "Option", "t"); _ }, [ in_ct ]) ->
       in_ct
   | _ -> ct
-
-let default_expression_of_core_type ~loc (ct : core_type) =
-  if is_core_type_list ct then
-    Some [%expr []]
-  else if is_core_type_array ct then
-    Some [%expr Array.of_list []]
-  else if is_core_type_string ct then
-    Some [%expr ""]
-  else
-    None
-
-type attr_type = No_attr | Main | Required | Default of expression
-
-(* Attributes Utils *)
-let get_attributes (attrs : attribute list) =
-  let check_res ~loc acc cur =
-    match (acc, cur) with
-    | No_attr, _ -> cur
-    | _, No_attr -> acc
-    | _, _ ->
-        Location.raise_errorf ~loc
-          "single field cannot have more than one attributes"
-  in
-  List.fold_left
-    (fun acc (attr : attribute) ->
-      (match attr.attr_name.txt with
-      | "main" -> Main
-      | "required" -> Required
-      | "default" -> (
-          match attr.attr_payload with
-          | PStr [ { pstr_desc = Pstr_eval (expr, _); _ } ] -> Default expr
-          | _ ->
-              Location.raise_errorf ~loc:attr.attr_loc
-                "value in default attribute is not supported")
-      (* ignore unknown attrs *)
-      | _ -> No_attr)
-      |> check_res ~loc:attr.attr_loc acc)
-    No_attr attrs
 
 (* Misc. Utils *)
 

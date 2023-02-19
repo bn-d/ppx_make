@@ -3,7 +3,7 @@ open Ppxlib
 (* generate function expression for option *)
 let fun_expression_of_option ~loc (ct : core_type) : expression =
   Ast_helper.with_default_loc loc (fun () ->
-      match Utils.get_attributes ct.ptyp_attributes with
+      match Arg_type.get_attr ct.ptyp_attributes with
       | Default e -> [%expr fun ?(value = [%e e]) () -> Some value]
       | No_attr -> [%expr fun ?value () -> value]
       | _ ->
@@ -21,20 +21,12 @@ let fun_expression_of_record ~loc ?choice (lds : label_declaration list) :
           lds
         |> List.rev
       in
+      let labels, mains = Arg_type.split arg_types in
       let main_pats =
-        List.map
-          (function (_, _, Arg_type.Nolabel) as t -> Some t | _ -> None)
-          arg_types
-        |> List.filter Option.is_some
-        |> List.map (fun opt ->
-               opt
-               |> Option.get
-               |> fun arg ->
-               let _, _, pat, _ = Arg_type.to_asttypes arg in
-               pat)
-      in
-      let main_pats =
-        if main_pats = [] then [ Ast_helper.Pat.any () ] else main_pats
+        if mains = [] then
+          [ Ast_helper.Pat.any () ]
+        else
+          List.map fst mains
       in
       arg_types
       |> List.map (fun (name, _, _) ->
@@ -49,15 +41,9 @@ let fun_expression_of_record ~loc ?choice (lds : label_declaration list) :
         expr main_pats
       |> fun expr ->
       List.fold_left
-        (fun acc arg_type ->
-          match arg_type with
-          | _, _, Arg_type.Nolabel -> acc
-          | _ ->
-              let arg_label, default_expr, pat, _ =
-                Arg_type.to_asttypes ~is_tuple:true arg_type
-              in
-              Ast_helper.Exp.fun_ arg_label default_expr pat acc)
-        expr arg_types)
+        (fun acc (arg_label, default_expr, pat, _) ->
+          Ast_helper.Exp.fun_ arg_label default_expr pat acc)
+        expr labels)
 
 (* generate function expression for tuple *)
 let fun_expression_of_tuple ~loc ?choice (cts : core_type list) : expression =
@@ -68,6 +54,12 @@ let fun_expression_of_tuple ~loc ?choice (cts : core_type list) : expression =
             let name = Utils.gen_tuple_label ~loc idx in
             Arg_type.of_core_type ~loc ~attrs name ct)
           cts
+      in
+      let labels, mains = Arg_type.split arg_types in
+      let () =
+        if mains <> [] then
+          Location.raise_errorf ~loc
+            "tuple types do not support `main` attribute"
       in
       arg_types
       |> List.map (fun (name, _, _) ->
@@ -80,12 +72,9 @@ let fun_expression_of_tuple ~loc ?choice (cts : core_type list) : expression =
       |> Ast_helper.Exp.fun_ Nolabel None (Ast_helper.Pat.any ())
       |> fun expr ->
       List.fold_left
-        (fun acc arg_type ->
-          let arg_label, default_expr, pat, _ =
-            Arg_type.to_asttypes ~is_tuple:true arg_type
-          in
+        (fun acc (arg_label, default_expr, pat, _) ->
           Ast_helper.Exp.fun_ arg_label default_expr pat acc)
-        expr (List.rev arg_types))
+        expr (List.rev labels))
 
 (* generate function core type for option *)
 let fun_core_type_of_option ~loc (name, params) (in_ct : core_type) : core_type
@@ -105,15 +94,12 @@ let fun_core_type_of_record ~loc (name, params) (lds : label_declaration list) :
           lds
         |> List.rev
       in
+      let labels, mains = Arg_type.split arg_types in
       let main_cts =
-        List.map
-          (function _, ct, Arg_type.Nolabel -> Some ct | _ -> None)
-          arg_types
-        |> List.filter Option.is_some
-        |> List.map Option.get
-      in
-      let main_cts =
-        if main_cts = [] then [ Utils.unit_core_type ~loc ] else main_cts
+        if mains = [] then
+          [ [%type: unit] ]
+        else
+          List.map snd mains
       in
       name
       |> Utils.core_type_of_name ~params
@@ -123,13 +109,8 @@ let fun_core_type_of_record ~loc (name, params) (lds : label_declaration list) :
         ct main_cts
       |> fun ct ->
       List.fold_left
-        (fun acc arg_type ->
-          match arg_type with
-          | _, _, Arg_type.Nolabel -> acc
-          | _ ->
-              let arg_label, _, _, ct = Arg_type.to_asttypes arg_type in
-              Ast_helper.Typ.arrow arg_label ct acc)
-        ct arg_types)
+        (fun acc (arg_label, _, _, ct) -> Ast_helper.Typ.arrow arg_label ct acc)
+        ct labels)
 
 (* generate function core type for tuple *)
 let fun_core_type_of_tuple ~loc (name, params) (cts : core_type list) :
@@ -142,17 +123,19 @@ let fun_core_type_of_tuple ~loc (name, params) (cts : core_type list) :
             Arg_type.of_core_type ~loc ~attrs name ct)
           cts
       in
+      let labels, mains = Arg_type.split arg_types in
+      let () =
+        if mains <> [] then
+          Location.raise_errorf ~loc
+            "tuple types do not support `main` attribute"
+      in
       name
       |> Utils.core_type_of_name ~params
-      |> Ast_helper.Typ.arrow Nolabel (Utils.unit_core_type ~loc)
+      |> Ast_helper.Typ.arrow Nolabel [%type: unit]
       |> fun ct ->
       List.fold_left
-        (fun acc arg_type ->
-          let arg_label, _, _, ct =
-            Arg_type.to_asttypes ~is_tuple:true arg_type
-          in
-          Ast_helper.Typ.arrow arg_label ct acc)
-        ct (arg_types |> List.rev))
+        (fun acc (arg_label, _, _, ct) -> Ast_helper.Typ.arrow arg_label ct acc)
+        ct (labels |> List.rev))
 
 (* generate structure item for core type *)
 let str_item_of_core_type (name, params) (ct : core_type) : structure_item =
