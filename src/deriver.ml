@@ -73,10 +73,11 @@ let fun_expression_of_tuple ~loc ?choice (cts : core_type list) : expression =
   Ast_helper.with_default_loc loc (fun () ->
       let arg_types =
         cts
-        |> List.mapi (fun index ct ->
-               let name = Utils.gen_tuple_label ~loc:ct.ptyp_loc index in
-               Arg_type.of_core_type ~loc:ct.ptyp_loc ~attrs:ct.ptyp_attributes
-                 name ct)
+        |> List.mapi
+             (fun index ({ ptyp_loc = loc; ptyp_attributes = attrs; _ } as ct)
+             ->
+               let name = Utils.gen_tuple_label ~loc index in
+               Arg_type.of_core_type ~loc ~attrs name ct)
       in
       arg_types
       |> List.map (fun (name, _, _) ->
