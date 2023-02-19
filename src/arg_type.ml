@@ -62,14 +62,15 @@ let of_core_type ~loc ~attrs name ct =
 let label_to_asttypes (name, ct, arg_types) =
   let pat = Ast_helper.Pat.var ~loc:name.loc name in
   match arg_types with
-  | Labelled -> (Asttypes.Labelled name.txt, None, pat, ct)
-  | Optional def_expr -> (Optional name.txt, def_expr, pat, ct)
+  | Some Labelled -> (Asttypes.Labelled name.txt, None, pat, ct)
+  | Some Optional def_expr -> (Optional name.txt, def_expr, pat, ct)
+  | _ -> Location.raise_errorf ~loc:name.loc "unexpected error"
 
 let split ts =
-  let labels, mains = List.partition (fun (_, _, l) -> Option.is_some l) ts in
+  let labels, mains = List.partition (fun (_, _, l) -> l <> None) ts in
   let labels =
     List.map
-      (fun (name, ct, l) -> label_to_asttypes (name, ct, Option.get l))
+      (fun (name, ct, l) -> label_to_asttypes (name, ct, l))
       labels
   and mains =
     List.map
