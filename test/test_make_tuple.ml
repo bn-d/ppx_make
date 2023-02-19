@@ -17,8 +17,8 @@ let string_ _ =
   OUnit2.assert_equal ("foo", "bar") (make_s ~v0:"foo" ~v1:"bar" ())
 
 let default _ =
-  OUnit2.assert_equal (42, 420) (make_d ());
-  OUnit2.assert_equal (420, 42) (make_d ~v0:420 ~v1:42 ())
+  OUnit2.assert_equal (42, 420, Some 42) (make_d ());
+  OUnit2.assert_equal (420, 42, None) (make_d ~v0:420 ~v1:42 ~v2:None ())
 
 let required _ =
   OUnit2.assert_equal (None, "cov", Some 1729)

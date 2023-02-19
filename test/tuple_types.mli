@@ -42,12 +42,19 @@ end
 
 [@@@end]
 
-type d = (int[@default 42]) * (int[@default 420]) [@@deriving_inline make]
+type d =
+  (int[@default 42]) * (int[@default 420]) * (int option[@default Some 42])
+[@@deriving_inline make]
 
 include sig
   [@@@ocaml.warning "-32"]
 
-  val make_d : ?v0:(int[@default 42]) -> ?v1:(int[@default 420]) -> unit -> d
+  val make_d :
+    ?v0:(int[@default 42]) ->
+    ?v1:(int[@default 420]) ->
+    ?v2:(int option[@default Some 42]) ->
+    unit ->
+    d
 end
 [@@ocaml.doc "@inline"]
 
