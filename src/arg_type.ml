@@ -32,9 +32,9 @@ let get_attr (attrs : attribute list) =
   List.fold_left
     (fun acc (attr : attribute) ->
       (match attr.attr_name.txt with
-      | "main" -> Main
-      | "required" -> Required
-      | "default" -> (
+      | "main" | "make.main" -> Main
+      | "required" | "make.required" -> Required
+      | "default" | "make.default" -> (
           match attr.attr_payload with
           | PStr [ { pstr_desc = Pstr_eval (expr, _); _ } ] -> Default expr
           | _ ->
@@ -63,15 +63,13 @@ let label_to_asttypes (name, ct, arg_types) =
   let pat = Ast_helper.Pat.var ~loc:name.loc name in
   match arg_types with
   | Some Labelled -> (Asttypes.Labelled name.txt, None, pat, ct)
-  | Some Optional def_expr -> (Optional name.txt, def_expr, pat, ct)
+  | Some (Optional def_expr) -> (Optional name.txt, def_expr, pat, ct)
   | _ -> Location.raise_errorf ~loc:name.loc "unexpected error"
 
 let split ts =
   let labels, mains = List.partition (fun (_, _, l) -> l <> None) ts in
   let labels =
-    List.map
-      (fun (name, ct, l) -> label_to_asttypes (name, ct, l))
-      labels
+    List.map (fun (name, ct, l) -> label_to_asttypes (name, ct, l)) labels
   and mains =
     List.map
       (fun (name, ct, _) ->

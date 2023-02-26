@@ -32,18 +32,18 @@ executable configuration in dune file.
 
 {1 Syntax}
 
-When tagging supported types with [[@@deriving make]], make functions will be
+When tagging [[@@deriving make]] to supported types, make functions will be
 derived accordingly.
 
 {2 Supported Types}
 
 {3 Records}
 
-For a record type [t], function [make_t] will be derived. By default, each field will be
-corresponded to a labeled argument, where the label is the same as the field
-name. If the field has type of [option], [list], [array] or [string], the argument
-will be optional and have a default value of [None], [[]], [[||]] or [""]. The
-function will finally take an [unit] and return the constructed [t].
+For a record type [t], function [make_t] will be derived. By default, each field
+will be corresponded to a labeled argument, where the label is the same as the
+field name. If the field has type of [option], [list], [array] or [string], the
+argument will be optional and have a default value of [None], [[]], [[||]] or
+[""]. The function will finally take an [unit] and return the constructed [t].
 
 {[
   type t = {
@@ -58,11 +58,11 @@ function will finally take an [unit] and return the constructed [t].
 
 {3 Tuples}
 
-For a tuple type [t], function [make_t] will be derived. Each value in the tuple will be
-corresponded to a labeled argument. The first value will be corresponded to
-labeled argument [v0], the second value to [v1] and vice versa. The optionality
-of the arguments follows the same rule as that of the record. The function will
-finally take an [unit] and return the constructed [t].
+For a tuple type [t], function [make_t] will be derived. Each value in the tuple
+will be corresponded to a labeled argument. The first value will be corresponded
+to labeled argument [v0], the second value to [v1] and vice versa. The
+optionality of the arguments follows the same rule as that of the record. The
+function will finally take an [unit] and return the constructed [t].
 
 {[
   type t = int * int option * int list [@@deriving make]
@@ -72,8 +72,9 @@ finally take an [unit] and return the constructed [t].
 
 {3 Options}
 
-For an option type [t], function [make_t] will be derived. The function will take an
-optional argument [?value] and an [unit], and then return the constructed [t].
+For an option type [t], function [make_t] will be derived. The function will
+take an optional argument [?value] and an [unit], and then return the
+constructed [t].
 
 {[
   type t = int option [@@deriving make]
@@ -84,11 +85,11 @@ optional argument [?value] and an [unit], and then return the constructed [t].
 {3 Variants}
 
 For a variant type [t], a make function will be derived for each case of the
-variant. For a case [C] in variant [t], function [make_c_of_t] will be derived. If the
-case is constant, the function will only take an [unit] and return the constant
-immediately. In other cases, the signature of the function will follow the rules
-described above. For case with only 1 argument, it will be considered as a tuple of
-size 1. Inline record is also supported.
+variant. For a case [C] in variant [t], function [make_c_of_t] will be derived.
+If the case is constant, the function will only take an [unit] and return the
+constant immediately. In other cases, the signature of the function will follow
+the rules described above. For case with only 1 argument, it will be considered
+as a tuple of size 1. Inline record is also supported.
 
 {[
   type t =
@@ -107,7 +108,8 @@ size 1. Inline record is also supported.
 
 {2 Attributes}
 
-Attributes may be used to alter the behavior of the derived make function.
+Attributes can be used to modify the behavior of the derived make function.
+Attributes may be prefixed with [make.] to avoid conflicts with other extensions.
 
 {3 [[@default]]}
 
