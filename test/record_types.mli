@@ -98,8 +98,8 @@ type complex = {
   c2 : int option;
   c3 : int list;
   c4 : string;
-  c5 : int; [@default 1024]
-  c6 : string; [@required]
+  c5 : int; [@make.default 1024]
+  c6 : string; [@make.required]
 }
 [@@deriving_inline make]
 
@@ -121,7 +121,7 @@ end
 [@@@end]
 
 type complex_with_main = {
-  cm1 : int; [@main]
+  cm1 : int; [@make.main]
   cm2 : int option;
   cm3 : int Option.t; [@main]
 }
