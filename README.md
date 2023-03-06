@@ -3,7 +3,7 @@
 [![CI](https://github.com/bn-d/ppx_make/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/bn-d/ppx_make/actions/workflows/build.yml)
 [![GitHub release status](https://img.shields.io/github/v/release/bn-d/ppx_make)](https://github.com/bn-d/ppx_make/releases)
 
-Ppxlib based `[@@deriving]` plugin to generate make functions.
+`[@@deriving]` plugin to generate make functions.
 
 ## Installation
 `ppx_make` can be installed via [OCaml Package Manager](https://opam.ocaml.org/packages/ppx_make/).

@@ -1,6 +1,6 @@
 {0 [[@@deriving make]]}
 
-Ppxlib based [[@@deriving]] plugin to generate make functions.
+[[@@deriving]] plugin to generate make functions.
 
 {1 Usage}
 
