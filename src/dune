@@ -3,4 +3,6 @@
  (kind ppx_deriver)
  (preprocess
   (pps ppxlib.metaquot))
- (libraries ppxlib))
+ (libraries ppxlib)
+ (instrumentation
+  (backend bisect_ppx)))
