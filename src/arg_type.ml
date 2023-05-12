@@ -5,19 +5,13 @@ type label_arg = Labelled | Optional of expression option
 type t = string loc * core_type * label_arg option
 
 let default_expression_of_core_type ~loc (ct : core_type) =
-  match ct.ptyp_desc with
-  | Ptyp_constr ({ txt = Lident "option"; _ }, _)
-  | Ptyp_constr ({ txt = Ldot (Lident "Option", "t"); _ }, _) ->
-      Some None
-  | Ptyp_constr ({ txt = Lident "list"; _ }, _)
-  | Ptyp_constr ({ txt = Ldot (Lident "List", "t"); _ }, _) ->
-      Some (Some [%expr []])
-  | Ptyp_constr ({ txt = Lident "array"; _ }, _)
-  | Ptyp_constr ({ txt = Ldot (Lident "Array", "t"); _ }, _) ->
+  match ct with
+  | [%type: [%t? _] option] | [%type: [%t? _] Option.t] -> Some None
+  | [%type: [%t? _] list] | [%type: [%t? _] List.t] -> Some (Some [%expr []])
+  | [%type: [%t? _] array] | [%type: [%t? _] Array.t] ->
+      (* need to make sure a new array is created every time *)
       Some (Some [%expr Array.of_list []])
-  | Ptyp_constr ({ txt = Lident "string"; _ }, [])
-  | Ptyp_constr ({ txt = Ldot (Lident "String", "t"); _ }, _) ->
-      Some (Some [%expr ""])
+  | [%type: string] | [%type: String.t] -> Some (Some [%expr ""])
   | _ -> None
 
 let get_attr (attrs : attribute list) =
