@@ -143,13 +143,12 @@ let str_item_of_core_type (name, params) (ct : core_type) : structure_item =
   Ast_helper.with_default_loc loc (fun () ->
       let pat = Ast_helper.Pat.var @@ Utils.gen_make_name name
       and fun_ct, expr =
-        match ct.ptyp_desc with
-        | Ptyp_tuple cts ->
+        match ct with
+        | { ptyp_desc = Ptyp_tuple cts; _ } ->
             (* T1 * ... * Tn *)
             ( fun_core_type_of_tuple ~loc (name, params) cts,
               fun_expression_of_tuple ~loc cts )
-        | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ])
-        | Ptyp_constr ({ txt = Ldot (Lident "Option", "t"); _ }, [ in_ct ]) ->
+        | [%type: [%t? in_ct] option] | [%type: [%t? in_ct] Option.t] ->
             (* T option *)
             ( fun_core_type_of_option ~loc (name, params) in_ct,
               fun_expression_of_option ~loc ct )
@@ -198,12 +197,11 @@ let str_item_of_variant_choice (name, params) (cd : constructor_declaration) :
 let sig_item_of_core_type (name, params) (ct : core_type) : signature_item =
   let loc = ct.ptyp_loc in
   Ast_helper.with_default_loc loc (fun () ->
-      (match ct.ptyp_desc with
-      | Ptyp_tuple cts ->
+      (match ct with
+      | { ptyp_desc = Ptyp_tuple cts; _ } ->
           (* T1 * ... * Tn *)
           fun_core_type_of_tuple ~loc (name, params) cts
-      | Ptyp_constr ({ txt = Lident "option"; _ }, [ in_ct ])
-      | Ptyp_constr ({ txt = Ldot (Lident "Option", "t"); _ }, [ in_ct ]) ->
+      | [%type: [%t? in_ct] option] | [%type: [%t? in_ct] Option.t] ->
           (* T option *)
           fun_core_type_of_option ~loc (name, params) in_ct
       | _ -> Utils.unsupported_error "core type" name)
