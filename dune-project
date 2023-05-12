@@ -16,4 +16,5 @@
  (description "[@@deriving] plugin to generate make functions")
  (depends
   (ppxlib (>= 0.10.0))
-  (ounit2 :with-test)))
+  (ounit2 :with-test)
+  (bisect_ppx :with-test)))
