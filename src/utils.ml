@@ -16,10 +16,24 @@ let strip_option (ct : core_type) =
 let unsupported_error str { txt; loc } =
   Location.raise_errorf ~loc "%s %s cannot be derived" str txt
 
+let has_make_attr ({ ptype_attributes; _ } : type_declaration) =
+  let is_make = function [%stri make] -> true | _ -> false in
+  List.exists
+    (fun (attr : attribute) ->
+      (attr.attr_name.txt = "deriving" || attr.attr_name.txt = "deriving_inline")
+      &&
+      match attr.attr_payload with
+      | PStr items -> List.exists is_make items
+      | _ -> false)
+    ptype_attributes
+
 let make_type_decl_generator f =
   Deriving.Generator.V2.make_noarg (fun ~ctxt (rec_flag, tds) ->
       let loc = Expansion_context.Deriver.derived_item_loc ctxt in
-      tds |> List.map (f ~loc rec_flag) |> List.concat)
+      tds
+      |> List.filter has_make_attr
+      |> List.map (f ~loc rec_flag)
+      |> List.concat)
 
 let gen_make_name { txt = name; loc } = { txt = "make_" ^ name; loc }
 
