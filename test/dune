@@ -1,5 +1,5 @@
 (test
  (name test_make)
  (preprocess
-  (pps ppx_make))
- (libraries ounit2))
+  (pps ppx_make ppx_show))
+ (libraries ounit2 ppx_show.runtime))

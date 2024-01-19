@@ -17,13 +17,21 @@ let unsupported_error str { txt; loc } =
   Location.raise_errorf ~loc "%s %s cannot be derived" str txt
 
 let has_make_attr ({ ptype_attributes; _ } : type_declaration) =
-  let is_make = function [%stri make] -> true | _ -> false in
+  let is_make = function [%expr make] -> true | _ -> false in
   List.exists
     (fun (attr : attribute) ->
       (attr.attr_name.txt = "deriving" || attr.attr_name.txt = "deriving_inline")
       &&
       match attr.attr_payload with
-      | PStr items -> List.exists is_make items
+      | PStr [ { pstr_desc = Pstr_eval ([%expr make], _); _ } ] -> true
+      | PStr
+          [
+            {
+              pstr_desc = Pstr_eval ({ pexp_desc = Pexp_tuple exprs; _ }, _);
+              _;
+            };
+          ] ->
+          List.exists is_make exprs
       | _ -> false)
     ptype_attributes
 
