@@ -17,4 +17,5 @@
  (depends
   (ppxlib (>= 0.10.0))
   (ounit2 :with-test)
+  (ppx_show :with-test)
   (bisect_ppx :with-test)))
