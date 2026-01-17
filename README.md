@@ -18,7 +18,7 @@ $ opam install ppx_make
 ```
 
 ## Usage
-Please see the [documentation](https://boni.ng/ppx_make/ppx_make/index.html).
+Please see the [documentation](https://ocaml.org/p/ppx_make/latest/doc/index.html).
 
 ## Example
 ```ocaml
