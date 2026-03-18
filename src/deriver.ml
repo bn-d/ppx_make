@@ -16,8 +16,8 @@ let fun_expression_of_record ~loc ?choice (lds : label_declaration list) :
   Ast_helper.with_default_loc loc (fun () ->
       let arg_types =
         List.map
-          (fun { pld_loc = loc; pld_name; pld_type; pld_attributes = attrs; _ } ->
-            Arg_type.of_core_type ~loc ~attrs pld_name pld_type)
+          (fun { pld_loc = loc; pld_name; pld_type; pld_attributes = attrs; _ }
+             -> Arg_type.of_core_type ~loc ~attrs pld_name pld_type)
           lds
         |> List.rev
       in
@@ -30,9 +30,9 @@ let fun_expression_of_record ~loc ?choice (lds : label_declaration list) :
       in
       arg_types
       |> List.map (fun (name, _, _) ->
-             let lid = Utils.longident_loc_of_name name in
-             let expr = Ast_helper.Exp.ident lid in
-             (lid, expr))
+          let lid = Utils.longident_loc_of_name name in
+          let expr = Ast_helper.Exp.ident lid in
+          (lid, expr))
       |> (fun labels -> Ast_helper.Exp.record labels None)
       |> Utils.add_choice_to_expr choice
       |> fun expr ->
@@ -63,11 +63,11 @@ let fun_expression_of_tuple ~loc ?choice (cts : core_type list) : expression =
       in
       arg_types
       |> List.map (fun (name, _, _) ->
-             Ast_helper.with_default_loc name.loc (fun () ->
-                 let lid = Utils.longident_loc_of_name name in
-                 Ast_helper.Exp.ident lid))
+          Ast_helper.with_default_loc name.loc (fun () ->
+              let lid = Utils.longident_loc_of_name name in
+              Ast_helper.Exp.ident lid))
       |> (fun exprs ->
-           match exprs with [ expr ] -> expr | _ -> Ast_helper.Exp.tuple exprs)
+      match exprs with [ expr ] -> expr | _ -> Ast_helper.Exp.tuple exprs)
       |> Utils.add_choice_to_expr choice
       |> Ast_helper.Exp.fun_ Nolabel None (Ast_helper.Pat.any ())
       |> fun expr ->
@@ -89,8 +89,8 @@ let fun_core_type_of_record ~loc (name, params) (lds : label_declaration list) :
   Ast_helper.with_default_loc loc (fun () ->
       let arg_types =
         List.map
-          (fun { pld_loc = loc; pld_name; pld_type; pld_attributes = attrs; _ } ->
-            Arg_type.of_core_type ~loc ~attrs pld_name pld_type)
+          (fun { pld_loc = loc; pld_name; pld_type; pld_attributes = attrs; _ }
+             -> Arg_type.of_core_type ~loc ~attrs pld_name pld_type)
           lds
         |> List.rev
       in
@@ -198,13 +198,13 @@ let sig_item_of_core_type (name, params) (ct : core_type) : signature_item =
   let loc = ct.ptyp_loc in
   Ast_helper.with_default_loc loc (fun () ->
       (match ct with
-      | { ptyp_desc = Ptyp_tuple cts; _ } ->
-          (* T1 * ... * Tn *)
-          fun_core_type_of_tuple ~loc (name, params) cts
-      | [%type: [%t? in_ct] option] | [%type: [%t? in_ct] Option.t] ->
-          (* T option *)
-          fun_core_type_of_option ~loc (name, params) in_ct
-      | _ -> Utils.unsupported_error "core type" name)
+        | { ptyp_desc = Ptyp_tuple cts; _ } ->
+            (* T1 * ... * Tn *)
+            fun_core_type_of_tuple ~loc (name, params) cts
+        | [%type: [%t? in_ct] option] | [%type: [%t? in_ct] Option.t] ->
+            (* T option *)
+            fun_core_type_of_option ~loc (name, params) in_ct
+        | _ -> Utils.unsupported_error "core type" name)
       |> Ast_helper.Val.mk @@ Utils.gen_make_name name
       |> Ast_helper.Sig.value)
 
@@ -226,8 +226,8 @@ let sig_item_of_variant_choice (name, params) (cd : constructor_declaration) :
         Utils.unsupported_error "constructor declaration" name
       else
         (match cd.pcd_args with
-        | Pcstr_tuple cts -> fun_core_type_of_tuple ~loc (name, params) cts
-        | Pcstr_record lds -> fun_core_type_of_record ~loc (name, params) lds)
+          | Pcstr_tuple cts -> fun_core_type_of_tuple ~loc (name, params) cts
+          | Pcstr_record lds -> fun_core_type_of_record ~loc (name, params) lds)
         |> Ast_helper.Val.mk @@ Utils.gen_make_choice_name name cd.pcd_name
         |> Ast_helper.Sig.value)
 
