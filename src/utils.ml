@@ -43,10 +43,16 @@ let make_type_decl_generator f =
       |> List.map (f ~loc rec_flag)
       |> List.concat)
 
-let gen_make_name { txt = name; loc } = { txt = "make_" ^ name; loc }
+let gen_make_name { txt = name; loc } =
+  let txt = match name with "t" -> "make" | _ -> "make_" ^ name in
+  { txt; loc }
 
 let gen_make_choice_name { txt = name; _ } { txt = choice_name; loc } =
-  let txt = String.lowercase_ascii ("make_" ^ choice_name ^ "_of_" ^ name) in
+  let txt =
+    match name with
+    | "t" -> String.lowercase_ascii ("make_" ^ choice_name)
+    | _ -> String.lowercase_ascii ("make_" ^ choice_name ^ "_of_" ^ name)
+  in
   { txt; loc }
 
 let gen_tuple_label ~loc index = { txt = "v" ^ string_of_int index; loc }

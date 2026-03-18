@@ -26,16 +26,16 @@ let get_attr (attrs : attribute list) =
   List.fold_left
     (fun acc (attr : attribute) ->
       (match attr.attr_name.txt with
-      | "main" | "make.main" -> Main
-      | "required" | "make.required" -> Required
-      | "default" | "make.default" -> (
-          match attr.attr_payload with
-          | PStr [ { pstr_desc = Pstr_eval (expr, _); _ } ] -> Default expr
-          | _ ->
-              Location.raise_errorf ~loc:attr.attr_loc
-                "value in default attribute is not supported")
-      (* ignore unknown attrs *)
-      | _ -> No_attr)
+        | "main" | "make.main" -> Main
+        | "required" | "make.required" -> Required
+        | "default" | "make.default" -> (
+            match attr.attr_payload with
+            | PStr [ { pstr_desc = Pstr_eval (expr, _); _ } ] -> Default expr
+            | _ ->
+                Location.raise_errorf ~loc:attr.attr_loc
+                  "value in default attribute is not supported")
+        (* ignore unknown attrs *)
+        | _ -> No_attr)
       |> check_res ~loc:attr.attr_loc acc)
     No_attr attrs
 
